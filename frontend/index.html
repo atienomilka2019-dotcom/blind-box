@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盲盒福袋搭配工具 v4.0</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <h1>盲盒福袋搭配工具</h1>
+      <span class="ver">v4.0</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="btn btn-sm" onclick="importFile()">📋 导入文件</button>
+      <button class="btn btn-sm btn-accent" onclick="exportExcel()">📥 导出Excel</button>
+      <button class="btn btn-sm" onclick="loadDemo()">📦 示例数据</button>
+      <button class="btn btn-sm btn-danger" onclick="resetAll()">🔄 重置</button>
+    </div>
+  </div>
+
+  <!-- 主布局 -->
+  <div class="main-layout">
+    <!-- 左侧 -->
+    <aside>
+      <div class="card">
+        <div class="card-title">⚙️ 全局配置</div>
+        <div class="form-group">
+          <label>📊 总权重</label>
+          <input type="number" id="cfg-totalWeight" value="10000" min="1" step="1">
+          <div class="hint">所有产品权重之和，越大精度越高</div>
+        </div>
+
+        <div class="tier-ratios-label">🎚️ 等级权重比例</div>
+        <div class="form-group">
+          <div class="ratio-row">
+            <div class="ratio-item rare">
+              <span class="ratio-badge rare">⭐ 稀有</span>
+              <input type="number" id="cfg-ratioRare" value="1" min="0.1" step="0.1">
+            </div>
+            <div class="ratio-item jackpot">
+              <span class="ratio-badge jackpot">👑 欧皇</span>
+              <input type="number" id="cfg-ratioJackpot" value="3" min="0.1" step="0.1">
+            </div>
+            <div class="ratio-item normal">
+              <span class="ratio-badge normal">📦 普通</span>
+              <input type="number" id="cfg-ratioNormal" value="10" min="0.1" step="0.1">
+            </div>
+          </div>
+          <div class="hint">数值越大=权重越高=越容易抽中</div>
+        </div>
+
+        <div class="form-group">
+          <label>💎 目标利润率 (%)</label>
+          <input type="number" id="cfg-margin" value="30" min="0" max="99" step="0.1">
+          <div class="hint">利润率 = (价格-成本) / 价格 × 100%</div>
+        </div>
+
+        <div class="form-group">
+          <label>🎫 定价模式</label>
+          <div class="mode-toggle" id="modeToggle">
+            <button data-mode="auto" class="active" onclick="setPriceMode('auto')">自动计算价格</button>
+            <button data-mode="manual" onclick="setPriceMode('manual')">手动设定价格</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>🎚️ 等级比例模式</label>
+          <div class="mode-toggle" id="ratioModeToggle">
+            <button data-mode="manual" class="active" onclick="setRatioMode('manual')">手动设定比例</button>
+            <button data-mode="auto" onclick="setRatioMode('auto')">自动反推比例</button>
+          </div>
+          <div class="hint" id="ratioModeHint">设定稀有:欧皇:普通的权重比例</div>
+        </div>
+
+        <div class="form-group" id="ratioHintGroup">
+        </div>
+
+        <div class="form-group" id="manualPriceGroup" style="display:none">
+          <label>手动单抽价格 (¥)</label>
+          <input type="number" id="cfg-manualPrice" value="0" min="0.01" step="0.01">
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <button class="btn btn-accent btn-full" onclick="addProduct()" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          添加产品
+        </button>
+        <button class="btn btn-accent btn-full" onclick="openProductPool()" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          从产品池选择
+        </button>
+        <hr class="section-divider" style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+        <button class="btn btn-full" onclick="importFile()">📋 导入文件（CSV / Excel）</button>
+        <button class="btn btn-full" onclick="exportExcel()">📥 导出 Excel</button>
+        <button class="btn btn-full" onclick="loadDemo()">📦 加载示例数据</button>
+        <button class="btn btn-danger btn-full" onclick="resetAll()">🗑️ 重置全部数据</button>
+      </div>
+    </aside>
+
+    <!-- 右侧主区域 -->
+    <main>
+      <div class="card">
+        <div class="card-title">
+          📦 产品列表
+          <span id="productCount" style="font-weight:400;font-size:12px;color:var(--text3);margin-left:4px;">0 个产品</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th style="width:110px">产品ID</th>
+                <th style="min-width:140px">产品名称</th>
+                <th style="width:100px">原价 (¥)</th>
+                <th style="width:100px">成本价 (¥)</th>
+                <th style="width:100px">等级</th>
+                <th style="width:80px">权重</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody id="productsTbody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📭</div>
+          <p>还没有产品，点击「添加产品」或「从产品池选择」</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px" id="resultsCard">
+        <div class="card-title">📈 计算结果</div>
+        <div class="results-overview" id="resultsOverview"></div>
+        <div class="tier-results" id="tierResults"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 产品池弹窗 -->
+<div class="modal-overlay" id="poolOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📋 产品池</h2>
+      <button class="modal-close" onclick="closeProductPool()">✕</button>
+    </div>
+    <input type="text" class="search-box" id="poolSearch" placeholder="🔍 搜索产品名称或ID..." oninput="renderPoolTable()">
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="pool-table">
+          <thead>
+            <tr>
+              <th class="pool-check">选</th>
+              <th>产品ID</th>
+              <th>产品名称</th>
+              <th>原价 (¥)</th>
+              <th>成本价 (¥)</th>
+              <th>等级</th>
+            </tr>
+          </thead>
+          <tbody id="poolTbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="poolEmptyState">
+        <div class="empty-icon">📭</div>
+        <p>产品池为空，请先导入 CSV 文件</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span id="poolSelectedCount" style="font-size:13px;color:var(--text3);margin-right:auto;">已选 0 个</span>
+      <button class="btn btn-sm" onclick="addEmptyPoolItem()" style="margin-right:auto">+ 新增</button>
+      <button class="btn btn-danger btn-sm" onclick="clearPool()">清空池</button>
+      <button class="btn" onclick="closeProductPool()">取消</button>
+      <button class="btn btn-accent" onclick="addFromPool()">添加到搭配列表</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- AI 面板挂载点 -->
+<div id="aiPanelRoot"></div>
+
+<!-- 脚本 -->
+<script src="js/api.js"></script>
+<script src="js/state.js"></script>
+<script src="js/import-export.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
