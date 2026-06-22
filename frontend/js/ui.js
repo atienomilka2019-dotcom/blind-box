@@ -21,7 +21,11 @@ function renderProducts(){
     return '<tr>'+
       '<td class="cell-index">'+(i+1)+'</td>'+
       '<td><input type="text" value="'+escapeHtml(p.id)+'" data-id="'+p._id+'" data-field="id" placeholder="输入ID"></td>'+
-      '<td><input type="text" value="'+escapeHtml(p.name)+'" data-id="'+p._id+'" data-field="name" placeholder="产品名称"></td>'+
+      '<td><input type="text" value="'+escapeHtml(p.name)+'" data-id="'+p._id+'" data-field="name" placeholder="产品名称">'+
+        (p.hotScore != null
+          ? '<span style="font-size:10px;color:var(--accent);margin-left:4px" title="Steam热度分">🔥'+p.hotScore+'</span>'
+          : '')+
+      '</td>'+
       '<td><input type="number" value="'+(p.marketPrice!=null?p.marketPrice:'')+'" data-id="'+p._id+'" data-field="marketPrice" step="0.01" min="0" placeholder="参考价" style="font-size:12px;color:var(--text2);"></td>'+
       '<td><input type="number" value="'+p.cost+'" data-id="'+p._id+'" data-field="cost" step="0.01" min="0.01" placeholder="0.00"></td>'+
       '<td class="cell-tier"><select class="tier-select" data-id="'+p._id+'" data-field="tier">'+tierOpts+'</select></td>'+
