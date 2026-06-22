@@ -1,0 +1,652 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 盲盒福袋搭配工具</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #f0f2f5 linear-gradient(135deg, #f0f2f5 0%, #e8ecf1 100%);
+  min-height: 100vh; color: #1a1a2e;
+}
+.header {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  padding: 20px 32px; color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,.3);
+}
+.header h1 { font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+.header .sub { font-size: 13px; opacity: .8; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+@media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+.card {
+  background: #fff; border-radius: 16px; padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.card-title {
+  font-size: 16px; font-weight: 700; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px; color: #1a1a2e;
+}
+.card-title .icon { font-size: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600; color: #64748b;
+  margin-bottom: 6px;
+}
+.form-group input, .form-group select {
+  width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; font-size: 14px; transition: all .2s;
+  background: #f8fafc; color: #1a1a2e; outline: none;
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+  background: #fff;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ratio-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.ratio-item { text-align: center; }
+.ratio-item label { font-size: 12px; }
+.ratio-item .badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; margin-bottom: 6px; color: #fff;
+}
+.badge-rare { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.badge-europe { background: linear-gradient(135deg, #ec4899, #db2777); }
+.badge-normal { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.toggle-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.toggle {
+  position: relative; width: 44px; height: 24px; cursor: pointer;
+}
+.toggle input { display: none; }
+.toggle .slider {
+  position: absolute; inset: 0; background: #cbd5e1; border-radius: 24px;
+  transition: .3s;
+}
+.toggle .slider::before {
+  content: ''; position: absolute; width: 20px; height: 20px;
+  left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: .3s;
+}
+.toggle input:checked + .slider { background: #6366f1; }
+.toggle input:checked + .slider::before { transform: translateX(20px); }
+.toggle-label { font-size: 13px; color: #64748b; }
+.btn {
+  padding: 10px 20px; border: none; border-radius: 10px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all .2s; display: inline-flex;
+  align-items: center; gap: 6px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  box-shadow: 0 4px 14px rgba(99,102,241,.35);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.4); }
+.btn-danger { background: #fef2f2; color: #dc2626; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+.btn-full { width: 100%; justify-content: center; margin-top: 8px; }
+.btn-outline { background: #fff; border: 1.5px solid #e2e8f0; color: #64748b; }
+.btn-outline:hover { border-color: #6366f1; color: #6366f1; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #e2e8f0; }
+td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+td input, td select {
+  width: 100%; padding: 8px 10px; border: 1.5px solid transparent;
+  border-radius: 8px; font-size: 13px; background: transparent;
+  transition: all .2s; color: #1a1a2e;
+}
+td input:hover, td select:hover { border-color: #e2e8f0; background: #f8fafc; }
+td input:focus, td select:focus {
+  border-color: #6366f1; background: #fff; outline: none;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.08);
+}
+.weight-cell {
+  font-weight: 700; color: #6366f1; text-align: center;
+  font-size: 15px; letter-spacing: .5px;
+}
+.level-tag {
+  display: inline-block; padding: 3px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.level-稀有 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.level-欧皇 { background: linear-gradient(135deg, #ec4899, #db2777); }
+.level-普通 { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+.empty-state .big { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px; }
+.result-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;
+}
+.result-card .label { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+.result-card .value { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+.result-card .value.accent { color: #6366f1; }
+.result-card .sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.pity-section { margin-top: 24px; }
+.pity-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; }
+.pity-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.pity-card {
+  flex: 1; min-width: 160px; padding: 16px; border-radius: 12px;
+  color: #fff; text-align: center;
+}
+.pity-card .pity-level { font-size: 13px; font-weight: 600; opacity: .9; }
+.pity-card .pity-count { font-size: 36px; font-weight: 800; margin: 4px 0; }
+.pity-card .pity-prob { font-size: 12px; opacity: .8; }
+.pity-rare { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.pity-europe { background: linear-gradient(135deg, #ec4899, #db2777); }
+.pity-normal { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.section-divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+.small-note { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎁 盲盒福袋搭配工具</h1>
+  <div class="sub">科学搭配 · 自动权重 · 保底计算</div>
+</div>
+
+<div class="container">
+  <!-- 左侧设置面板 -->
+  <aside>
+    <div class="card">
+      <div class="card-title"><span class="icon">⚙️</span> 全局配置</div>
+
+      <div class="form-group">
+        <label>📊 总权重</label>
+        <input type="number" id="totalWeight" value="10000" min="1" oninput="recalc()">
+        <div class="small-note">所有产品权重之和</div>
+      </div>
+
+      <div class="form-group">
+        <label>💎 目标利润率 (%)</label>
+        <input type="number" id="profitMargin" value="30" min="0" max="99" step="0.1" oninput="recalc()">
+        <div class="small-note">利润率 = (售价-成本) / 售价</div>
+      </div>
+
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" id="autoPrice" checked onchange="togglePriceMode()">
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label" id="priceModeLabel">自动计算单抽价格</span>
+      </div>
+
+      <div class="form-group">
+        <label>🎫 单抽价格 (元)</label>
+        <input type="number" id="singlePrice" value="0" min="0" step="0.01" disabled oninput="recalc()">
+      </div>
+
+      <div class="form-group">
+        <label>🛡️ 保底系数</label>
+        <input type="number" id="pityMultiplier" value="2.5" min="0.5" max="10" step="0.1" oninput="recalc()">
+        <div class="small-note">保底抽数 = 系数 / 出货概率</div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="card-title"><span class="icon">🎚️</span> 等级权重比例</div>
+      <div class="small-note" style="margin-bottom:12px">数值越大 = 权重越高 = 越容易抽中</div>
+      <div class="ratio-row">
+        <div class="ratio-item">
+          <span class="badge badge-rare">稀有</span>
+          <input type="number" id="ratioRare" value="1" min="0.1" step="0.1" oninput="recalc()">
+        </div>
+        <div class="ratio-item">
+          <span class="badge badge-europe">欧皇</span>
+          <input type="number" id="ratioEurope" value="3" min="0.1" step="0.1" oninput="recalc()">
+        </div>
+        <div class="ratio-item">
+          <span class="badge badge-normal">普通</span>
+          <input type="number" id="ratioNormal" value="10" min="0.1" step="0.1" oninput="recalc()">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="recalc()">🔄 重新计算</button>
+
+      <hr class="section-divider">
+
+      <button class="btn btn-outline btn-full" onclick="loadDemo()">📦 加载示例数据</button>
+      <button class="btn btn-outline btn-full" onclick="clearAll()">🗑️ 清空所有产品</button>
+      <button class="btn btn-outline btn-full" onclick="exportData()">📋 导出配置</button>
+    </div>
+  </aside>
+
+  <!-- 右侧主区域 -->
+  <main>
+    <!-- 产品表格 -->
+    <div class="card">
+      <div class="toolbar">
+        <div class="card-title" style="margin-bottom:0"><span class="icon">📦</span> 产品列表</div>
+        <button class="btn btn-primary" onclick="addProduct()">+ 添加产品</button>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table id="productTable">
+          <thead>
+            <tr>
+              <th style="width:80px">ID</th>
+              <th style="width:160px">产品名称</th>
+              <th style="width:90px">售价 (¥)</th>
+              <th style="width:90px">成本 (¥)</th>
+              <th style="width:90px">等级</th>
+              <th style="width:80px">权重</th>
+              <th style="width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="productBody">
+            <tr class="empty-state">
+              <td colspan="7">
+                <div class="big">📭</div>
+                <p>还没有产品，点击「添加产品」开始</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 计算结果 -->
+    <div class="card" style="margin-top:24px" id="resultsCard">
+      <div class="card-title"><span class="icon">📈</span> 计算结果</div>
+
+      <div class="results" id="resultsGrid">
+        <div class="result-card">
+          <div class="label">期望成本 / 抽</div>
+          <div class="value accent" id="resExpectedCost">--</div>
+          <div class="sub">单抽的理论成本</div>
+        </div>
+        <div class="result-card">
+          <div class="label">建议单抽价格</div>
+          <div class="value accent" id="resSuggestPrice">--</div>
+          <div class="sub">达到目标利润率的价格</div>
+        </div>
+        <div class="result-card">
+          <div class="label">实际利润率</div>
+          <div class="value" id="resActualMargin">--</div>
+          <div class="sub">基于当前单抽价格</div>
+        </div>
+        <div class="result-card">
+          <div class="label">每抽期望利润</div>
+          <div class="value" id="resProfit" style="color:#10b981">--</div>
+          <div class="sub">理论单抽净利润</div>
+        </div>
+      </div>
+
+      <div class="pity-section">
+        <h3>🛡️ 保底推荐</h3>
+        <div class="pity-row" id="pityRow">
+          <div class="pity-card pity-rare">
+            <div class="pity-level">⭐ 稀有</div>
+            <div class="pity-count" id="pityRare">--</div>
+            <div class="pity-prob" id="probRare">概率: --%</div>
+          </div>
+          <div class="pity-card pity-europe">
+            <div class="pity-level">👑 欧皇</div>
+            <div class="pity-count" id="pityEurope">--</div>
+            <div class="pity-prob" id="probEurope">概率: --%</div>
+          </div>
+          <div class="pity-card pity-normal">
+            <div class="pity-level">📦 普通</div>
+            <div class="pity-count" id="pityNormal">--</div>
+            <div class="pity-prob" id="probNormal">概率: --%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ============ 数据存储 ============
+const STORAGE_KEY = 'blindbox_products';
+const SETTINGS_KEY = 'blindbox_settings';
+
+function saveProducts() {
+  const rows = document.querySelectorAll('#productBody tr[data-id]');
+  const products = [];
+  rows.forEach(row => {
+    products.push({
+      id: row.querySelector('.prod-id').value,
+      name: row.querySelector('.prod-name').value,
+      price: parseFloat(row.querySelector('.prod-price').value) || 0,
+      cost: parseFloat(row.querySelector('.prod-cost').value) || 0,
+      level: row.querySelector('.prod-level').value
+    });
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+}
+
+function saveSettings() {
+  const settings = {
+    totalWeight: document.getElementById('totalWeight').value,
+    profitMargin: document.getElementById('profitMargin').value,
+    autoPrice: document.getElementById('autoPrice').checked,
+    singlePrice: document.getElementById('singlePrice').value,
+    pityMultiplier: document.getElementById('pityMultiplier').value,
+    ratioRare: document.getElementById('ratioRare').value,
+    ratioEurope: document.getElementById('ratioEurope').value,
+    ratioNormal: document.getElementById('ratioNormal').value
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function loadSettings() {
+  const saved = localStorage.getItem(SETTINGS_KEY);
+  if (saved) {
+    const s = JSON.parse(saved);
+    document.getElementById('totalWeight').value = s.totalWeight || 10000;
+    document.getElementById('profitMargin').value = s.profitMargin || 30;
+    document.getElementById('autoPrice').checked = s.autoPrice !== false;
+    document.getElementById('singlePrice').value = s.singlePrice || 0;
+    document.getElementById('pityMultiplier').value = s.pityMultiplier || 2.5;
+    document.getElementById('ratioRare').value = s.ratioRare || 1;
+    document.getElementById('ratioEurope').value = s.ratioEurope || 3;
+    document.getElementById('ratioNormal').value = s.ratioNormal || 10;
+    togglePriceMode();
+  }
+}
+
+function loadProducts() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    const products = JSON.parse(saved);
+    if (products.length > 0) {
+      clearProductRows();
+      products.forEach(p => addProductRow(p));
+    }
+  }
+}
+
+// ============ 产品行管理 ============
+let productIdCounter = 0;
+
+function addProductRow(data) {
+  const tbody = document.getElementById('productBody');
+  // 移除空状态
+  const emptyRow = tbody.querySelector('.empty-state');
+  if (emptyRow) emptyRow.remove();
+
+  const id = data?.id || '';
+  const name = data?.name || '';
+  const price = data?.price || 0;
+  const cost = data?.cost || 0;
+  const level = data?.level || '普通';
+  const rowId = 'row_' + (++productIdCounter);
+
+  const tr = document.createElement('tr');
+  tr.setAttribute('data-id', rowId);
+  tr.innerHTML = `
+    <td><input type="text" class="prod-id" value="${escapeHtml(id)}" placeholder="编号"></td>
+    <td><input type="text" class="prod-name" value="${escapeHtml(name)}" placeholder="产品名称"></td>
+    <td><input type="number" class="prod-price" value="${price}" min="0" step="0.01" placeholder="0"></td>
+    <td><input type="number" class="prod-cost" value="${cost}" min="0" step="0.01" placeholder="0"></td>
+    <td>
+      <select class="prod-level">
+        <option value="稀有" ${level==='稀有'?'selected':''}>⭐ 稀有</option>
+        <option value="欧皇" ${level==='欧皇'?'selected':''}>👑 欧皇</option>
+        <option value="普通" ${level==='普通'?'selected':''}>📦 普通</option>
+      </select>
+    </td>
+    <td class="weight-cell" id="weight_${rowId}">-</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteProduct('${rowId}')">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+
+  // 监听输入变化
+  tr.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', () => { recalc(); saveProducts(); });
+    el.addEventListener('change', () => { recalc(); saveProducts(); });
+  });
+}
+
+function deleteProduct(rowId) {
+  const row = document.querySelector(`tr[data-id="${rowId}"]`);
+  if (row) row.remove();
+  // 检查是否为空
+  const tbody = document.getElementById('productBody');
+  if (tbody.querySelectorAll('tr[data-id]').length === 0) {
+    tbody.innerHTML = `<tr class="empty-state">
+      <td colspan="7">
+        <div class="big">📭</div>
+        <p>还没有产品，点击「添加产品」开始</p>
+      </td>
+    </tr>`;
+  }
+  saveProducts();
+  recalc();
+}
+
+function clearProductRows() {
+  document.getElementById('productBody').innerHTML = '';
+}
+
+function addProduct() {
+  addProductRow({});
+  saveProducts();
+  recalc();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ 价格模式切换 ============
+function togglePriceMode() {
+  const auto = document.getElementById('autoPrice').checked;
+  const priceInput = document.getElementById('singlePrice');
+  const label = document.getElementById('priceModeLabel');
+  priceInput.disabled = auto;
+  if (auto) {
+    priceInput.style.background = '#f1f5f9';
+    priceInput.style.color = '#94a3b8';
+    label.textContent = '自动计算单抽价格';
+  } else {
+    priceInput.style.background = '#f8fafc';
+    priceInput.style.color = '#1a1a2e';
+    label.textContent = '手动设置单抽价格';
+  }
+  saveSettings();
+  recalc();
+}
+
+// ============ 核心计算逻辑 ============
+function recalc() {
+  saveSettings();
+  const totalWeight = parseInt(document.getElementById('totalWeight').value) || 10000;
+  const profitMargin = parseFloat(document.getElementById('profitMargin').value) || 0;
+  const autoPrice = document.getElementById('autoPrice').checked;
+  const singlePrice = parseFloat(document.getElementById('singlePrice').value) || 0;
+  const pityMultiplier = parseFloat(document.getElementById('pityMultiplier').value) || 2.5;
+  const ratioRare = parseFloat(document.getElementById('ratioRare').value) || 1;
+  const ratioEurope = parseFloat(document.getElementById('ratioEurope').value) || 3;
+  const ratioNormal = parseFloat(document.getElementById('ratioNormal').value) || 10;
+
+  // 收集产品
+  const rows = document.querySelectorAll('#productBody tr[data-id]');
+  const products = [];
+  rows.forEach(row => {
+    products.push({
+      rowId: row.getAttribute('data-id'),
+      id: row.querySelector('.prod-id').value,
+      name: row.querySelector('.prod-name').value,
+      price: parseFloat(row.querySelector('.prod-price').value) || 0,
+      cost: parseFloat(row.querySelector('.prod-cost').value) || 0,
+      level: row.querySelector('.prod-level').value
+    });
+  });
+
+  if (products.length === 0) {
+    // 清空结果显示
+    document.getElementById('resExpectedCost').textContent = '--';
+    document.getElementById('resSuggestPrice').textContent = '--';
+    document.getElementById('resActualMargin').textContent = '--';
+    document.getElementById('resProfit').textContent = '--';
+    document.getElementById('pityRare').textContent = '--';
+    document.getElementById('pityEurope').textContent = '--';
+    document.getElementById('pityNormal').textContent = '--';
+    document.getElementById('probRare').textContent = '概率: --%';
+    document.getElementById('probEurope').textContent = '概率: --%';
+    document.getElementById('probNormal').textContent = '概率: --%';
+    return;
+  }
+
+  const ratioMap = { '稀有': ratioRare, '欧皇': ratioEurope, '普通': ratioNormal };
+
+  // 计算每个产品的原始权重（基于等级比例）
+  let totalRawWeight = 0;
+  products.forEach(p => {
+    p.rawWeight = ratioMap[p.level] || ratioNormal;
+    totalRawWeight += p.rawWeight;
+  });
+
+  // 按比例缩放到目标总权重
+  const scale = totalWeight / totalRawWeight;
+  let allocatedTotal = 0;
+  products.forEach(p => {
+    p.calcWeight = Math.round(p.rawWeight * scale);
+    allocatedTotal += p.calcWeight;
+  });
+
+  // 调整取整误差——按权重从大到小排序，差额分给最大的几个
+  let diff = totalWeight - allocatedTotal;
+  if (diff !== 0) {
+    const sorted = [...products].sort((a, b) => {
+      // diff > 0: 需要增加权重，优先给权重最大的
+      // diff < 0: 需要减少权重，优先给权重最小的（绝对值最大）
+      return diff > 0 ? b.calcWeight - a.calcWeight : a.calcWeight - b.calcWeight;
+    });
+    for (let i = 0; i < Math.abs(diff); i++) {
+      const idx = i % sorted.length;
+      sorted[idx].calcWeight += diff > 0 ? 1 : -1;
+      // 防止权重变负
+      if (sorted[idx].calcWeight < 0) sorted[idx].calcWeight = 0;
+    }
+  }
+
+  // 更新权重显示
+  products.forEach(p => {
+    const cell = document.getElementById('weight_' + p.rowId);
+    if (cell) cell.textContent = p.calcWeight;
+  });
+
+  // 重新计算实际总权重（因为有零权重保护）
+  const actualTotalWeight = products.reduce((sum, p) => sum + p.calcWeight, 0);
+
+  // 计算期望成本
+  let expectedCost = 0;
+  products.forEach(p => {
+    expectedCost += p.cost * p.calcWeight / actualTotalWeight;
+  });
+
+  // 计算建议价格
+  const suggestPrice = profitMargin >= 100 ? Infinity : (expectedCost / (1 - profitMargin / 100));
+
+  // 实际价格
+  let actualPrice;
+  if (autoPrice) {
+    actualPrice = isFinite(suggestPrice) ? suggestPrice : expectedCost * 10;
+    document.getElementById('singlePrice').value = actualPrice.toFixed(2);
+  } else {
+    actualPrice = singlePrice;
+  }
+
+  // 实际利润率
+  const actualMargin = actualPrice > 0 ? ((actualPrice - expectedCost) / actualPrice * 100) : 0;
+
+  // 每抽利润
+  const profitPerDraw = actualPrice - expectedCost;
+
+  // 更新结果卡片
+  document.getElementById('resExpectedCost').textContent = '¥' + expectedCost.toFixed(2);
+  document.getElementById('resSuggestPrice').textContent = isFinite(suggestPrice) ? '¥' + suggestPrice.toFixed(2) : '∞';
+  document.getElementById('resActualMargin').textContent = actualMargin.toFixed(2) + '%';
+  document.getElementById('resProfit').textContent = '¥' + profitPerDraw.toFixed(2);
+
+  // 计算各等级权重占比 & 保底
+  const levelWeights = { '稀有': 0, '欧皇': 0, '普通': 0 };
+  products.forEach(p => {
+    levelWeights[p.level] += p.calcWeight;
+  });
+
+  const levels = ['稀有', '欧皇', '普通'];
+  const pityIds = { '稀有': 'pityRare', '欧皇': 'pityEurope', '普通': 'pityNormal' };
+  const probIds = { '稀有': 'probRare', '欧皇': 'probEurope', '普通': 'pityNormal' };
+
+  levels.forEach(level => {
+    const prob = actualTotalWeight > 0 ? levelWeights[level] / actualTotalWeight : 0;
+    const pity = prob > 0 ? Math.ceil(pityMultiplier / prob) : 999999;
+    document.getElementById(pityIds[level]).textContent = prob > 0 ? pity + ' 抽' : '∞';
+    document.getElementById(probIds[level]).textContent = '概率: ' + (prob * 100).toFixed(3) + '%';
+  });
+}
+
+// ============ 导出 ============
+function exportData() {
+  saveProducts();
+  saveSettings();
+  const products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  const data = { settings, products, exportTime: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = '盲盒配置_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============ 加载示例 ============
+function loadDemo() {
+  clearProductRows();
+  const demo = [
+    { id: 'SSR-01', name: '传说之剑', price: 888, cost: 120, level: '稀有' },
+    { id: 'SSR-02', name: '龙鳞铠甲', price: 688, cost: 90, level: '稀有' },
+    { id: 'SR-01', name: '魔力戒指', price: 288, cost: 35, level: '欧皇' },
+    { id: 'SR-02', name: '精灵之弓', price: 268, cost: 30, level: '欧皇' },
+    { id: 'SR-03', name: '暗影斗篷', price: 258, cost: 28, level: '欧皇' },
+    { id: 'R-01', name: '治疗药水', price: 38, cost: 5, level: '普通' },
+    { id: 'R-02', name: '力量护符', price: 42, cost: 6, level: '普通' },
+    { id: 'R-03', name: '金币袋', price: 35, cost: 4, level: '普通' },
+    { id: 'R-04', name: '经验之书', price: 40, cost: 5, level: '普通' },
+    { id: 'R-05', name: '传送卷轴', price: 36, cost: 4.5, level: '普通' }
+  ];
+  demo.forEach(p => addProductRow(p));
+  saveProducts();
+  recalc();
+}
+
+function clearAll() {
+  if (confirm('确定要清空所有产品吗？此操作不可恢复。')) {
+    clearProductRows();
+    const tbody = document.getElementById('productBody');
+    tbody.innerHTML = `<tr class="empty-state">
+      <td colspan="7">
+        <div class="big">📭</div>
+        <p>还没有产品，点击「添加产品」开始</p>
+      </td>
+    </tr>`;
+    saveProducts();
+    recalc();
+  }
+}
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  loadProducts();
+  recalc();
+});
+
+// 自动保存设置
+document.querySelectorAll('#totalWeight, #profitMargin, #singlePrice, #pityMultiplier, #ratioRare, #ratioEurope, #ratioNormal').forEach(el => {
+  el.addEventListener('input', saveSettings);
+});
+</script>
+
+</body>
+</html>

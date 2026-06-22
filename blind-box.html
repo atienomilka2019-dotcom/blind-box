@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盲盒福袋搭配器</title>
+<style>
+
+:root {
+  --bg: #18181b;
+  --surface: #27272a;
+  --surface2: #3f3f46;
+  --border: #52525b;
+  --text: #f4f4f5;
+  --text2: #a1a1aa;
+  --text3: #71717a;
+  --accent: #06b6d4;
+  --accent-hover: #0891b2;
+  --rare: #f59e0b;
+  --rare-bg: rgba(245,158,11,0.12);
+  --rare-border: rgba(245,158,11,0.3);
+  --jackpot: #ec4899;
+  --jackpot-bg: rgba(236,72,153,0.12);
+  --jackpot-border: rgba(236,72,153,0.3);
+  --normal: #a1a1aa;
+  --normal-bg: rgba(161,161,170,0.08);
+  --normal-border: rgba(161,161,170,0.2);
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+.app{max-width:1280px;margin:0 auto;padding:24px 20px 48px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-left svg{width:28px;height:28px;color:var(--accent)}
+.header h1{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.header-actions{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font)}
+.btn:hover{background:var(--surface2);color:var(--text)}
+.btn svg{width:15px;height:15px;flex-shrink:0}
+.btn-accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-danger{color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3)}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn-sm svg{width:13px;height:13px}
+.btn-icon{padding:5px;min-width:30px;justify-content:center}
+.config-bar{display:flex;align-items:flex-end;gap:16px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;flex-wrap:wrap}
+.config-item{display:flex;flex-direction:column;gap:5px}
+.config-item label{font-size:12px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.input-group{display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.input-group span{display:flex;align-items:center;padding:0 10px;font-size:14px;color:var(--text3);background:rgba(255,255,255,0.03);height:36px;flex-shrink:0}
+.input-group input{border:none;background:transparent;color:var(--text);font-size:14px;padding:8px 10px;width:90px;outline:none;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.input-group input:focus{background:rgba(255,255,255,0.03)}
+.mode-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg)}
+.mode-toggle button{padding:8px 14px;border:none;background:transparent;color:var(--text3);font-size:13px;cursor:pointer;transition:all .15s;font-family:var(--font);white-space:nowrap}
+.mode-toggle button.active{background:var(--accent);color:#000;font-weight:600}
+.config-stat{display:flex;flex-direction:column;gap:2px;padding-left:16px;border-left:1px solid var(--border);margin-left:auto}
+.config-stat .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.config-stat .stat-value{font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--accent)}
+.tier-config{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.tier-card{flex:1;min-width:160px;padding:14px 18px;border-radius:var(--radius);border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.tier-card.rare{background:var(--rare-bg);border-color:var(--rare-border)}
+.tier-card.jackpot{background:var(--jackpot-bg);border-color:var(--jackpot-border)}
+.tier-card.normal{background:var(--normal-bg);border-color:var(--normal-border)}
+.tier-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tier-card.rare .tier-dot{background:var(--rare);box-shadow:0 0 8px rgba(245,158,11,0.4)}
+.tier-card.jackpot .tier-dot{background:var(--jackpot);box-shadow:0 0 8px rgba(236,72,153,0.4)}
+.tier-card.normal .tier-dot{background:var(--normal)}
+.tier-info{flex:1;min-width:0}
+.tier-name{font-size:13px;font-weight:600}
+.tier-card.rare .tier-name{color:var(--rare)}
+.tier-card.jackpot .tier-name{color:var(--jackpot)}
+.tier-card.normal .tier-name{color:var(--text2)}
+.tier-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.tier-weight-input{width:70px;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;text-align:center;font-family:var(--font-mono);outline:none}
+.tier-weight-input:focus{border-color:var(--accent)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-header h2{font-size:15px;font-weight:600}
+.section-header .count{font-size:12px;color:var(--text3);font-weight:400;margin-left:6px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2);white-space:nowrap}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,0.02)}
+td input,td select{width:100%;padding:6px 8px;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-size:13px;outline:none;font-family:var(--font);transition:border-color .15s}
+td input:focus,td select:focus{border-color:var(--accent);background:rgba(6,182,212,0.05)}
+td input:hover,td select:hover{border-color:var(--border)}
+td input[type=number]{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+td .cell-readonly{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;padding:6px 8px;color:var(--text2)}
+td .cell-index{color:var(--text3);text-align:center;font-size:12px;width:30px}
+.cell-tier{text-align:center}
+.tier-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:0.3px}
+.tier-badge.rare{background:var(--rare-bg);color:var(--rare);border:1px solid var(--rare-border)}
+.tier-badge.jackpot{background:var(--jackpot-bg);color:var(--jackpot);border:1px solid var(--jackpot-border)}
+.tier-badge.normal{background:var(--normal-bg);color:var(--text2);border:1px solid var(--normal-border)}
+td select.tier-select{font-weight:600;text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:20px}
+.result-card{padding:18px 20px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.result-card h3{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.result-card .big-num{font-size:28px;font-weight:700;font-family:var(--font-mono);line-height:1}
+.pity-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.pity-table td{padding:4px 8px}
+.pity-table td:first-child{color:var(--text3)}
+.pity-table td:last-child{text-align:right;font-family:var(--font-mono);font-weight:600}
+.overview-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.overview-row span:first-child{color:var(--text3)}
+.overview-row span:last-child{font-family:var(--font-mono);font-weight:600}
+.empty-state{padding:40px 20px;text-align:center;color:var(--text3)}
+.empty-state svg{width:40px;height:40px;margin-bottom:10px;opacity:0.4}
+.empty-state p{font-size:14px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.warn{background:rgba(245,158,11,0.15);border-color:var(--rare-border);color:var(--warning)}
+@media(max-width:768px){
+  .app{padding:16px 12px}
+  .header{flex-direction:column;align-items:flex-start}
+  .header-actions{width:100%}
+  .header-actions .btn{flex:1;justify-content:center}
+  .config-bar{flex-direction:column;align-items:stretch}
+  .config-stat{margin-left:0;padding-left:0;border-left:none;padding-top:10px;border-top:1px solid var(--border);flex-direction:row;justify-content:space-between;align-items:center}
+  .tier-config{flex-direction:column}
+  .tier-card{min-width:auto}
+  .results-grid{grid-template-columns:1fr}
+  td input,td select{min-width:80px}
+}
+@media(max-width:480px){
+  .mode-toggle{width:100%}
+  .mode-toggle button{flex:1;text-align:center}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+</div>
+<script>
+</script>
+</body>
+</html>
+(function(){
+'use strict';
+
+var TIERS = ['稀有','欧皇','普通'];
+var STORAGE_KEY = 'blindbox_state_v2';
+
+var state = {
+  products: [],
+  tierWeights: {'稀有':100,'欧皇':20,'普通':500},
+  targetMargin: 30,
+  priceMode: 'auto',
+  manualPrice: null
+};
+var nextId = 1;
+
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var saved = JSON.parse(raw);
+      if(saved.products) state.products = saved.products;
+      if(saved.tierWeights) state.tierWeights = saved.tierWeights;
+      if(typeof saved.targetMargin === 'number') state.targetMargin = saved.targetMargin;
+      if(saved.priceMode) state.priceMode = saved.priceMode;
+      if(saved.manualPrice != null) state.manualPrice = saved.manualPrice;
+      if(saved.nextId) nextId = saved.nextId;
+    }
+  }catch(e){}
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      products: state.products,
+      tierWeights: state.tierWeights,
+      targetMargin: state.targetMargin,
+      priceMode: state.priceMode,
+      manualPrice: state.manualPrice,
+      nextId: nextId
+    }));
+  }catch(e){}
+}
+
+function getTotalWeight(){
+  return TIERS.reduce(function(s,t){ return s + (state.tierWeights[t] || 0); }, 0);
+}
+
+function getTierProducts(tier){
+  return state.products.filter(function(p){ return p.tier === tier; });
+}
+
+function expectedCostPerDraw(){
+  var total = getTotalWeight();
+  if(total === 0) return 0;
+  var sum = 0;
+  state.products.forEach(function(p){
+    sum += (p.weight || 0) * (p.cost || 0);
+  });
+  return sum / total;
+}
+
+function calcPrice(){
+  var cost = expectedCostPerDraw();
+  if(cost <= 0) return 0;
+  var m = state.targetMargin / 100;
+  if(m >= 1) return cost * 100;
+  return cost / (1 - m);
+}
+
+function calcMargin(price){
+  var total = getTotalWeight();
+  if(total === 0 || !price || price <= 0) return 0;
+  var sumCost = 0;
+  state.products.forEach(function(p){
+    sumCost += (p.weight || 0) * (p.cost || 0);
+  });
+  var rev = total * price;
+  if(rev <= 0) return 0;
+  return ((rev - sumCost) / rev) * 100;
+}
+
+function distributeWeights(){
+  TIERS.forEach(function(tier){
+    var prods = getTierProducts(tier);
+    var tw = state.tierWeights[tier] || 0;
+    if(prods.length === 0 || tw <= 0){
+      prods.forEach(function(p){ p.weight = 0; });
+      return;
+    }
+    var costs = prods.map(function(p){ return (p.cost > 0 ? p.cost : 1); });
+    var raw = costs.map(function(c){ return 1 / c; });
+    var totalRaw = raw.reduce(function(a,b){ return a+b; }, 0);
+    var floats = raw.map(function(r){ return r / totalRaw * tw; });
+    var ints = floats.map(function(f){ return Math.max(1, Math.floor(f)); });
+
+    var remainders = floats.map(function(f,i){ return f - ints[i]; });
+    var remaining = tw - ints.reduce(function(a,b){ return a+b; }, 0);
+    var idxs = remainders.map(function(r,i){ return i; }).sort(function(a,b){ return remainders[b] - remainders[a]; });
+
+    for(var i = 0; i < Math.min(remaining, idxs.length); i++){
+      ints[idxs[i]]++;
+    }
+    prods.forEach(function(p,i){ p.weight = ints[i]; });
+  });
+}
+
+function calcPity(prob, confidence){
+  if(prob >= 1) return 1;
+  if(prob <= 0) return Infinity;
+  return Math.ceil(Math.log(1 - confidence) / Math.log(1 - prob));
+}
+
+function el(id){ return document.getElementById(id); }
+
+function escHtml(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTierConfig(){
+  var container = el('tier-config');
+  var total = getTotalWeight();
+  var colors = {
+    '稀有': {bg:'rgba(245,158,11,0.12)',border:'rgba(245,158,11,0.3)',text:'#f59e0b',dot:'#f59e0b'},
+    '欧皇': {bg:'rgba(236,72,153,0.12)',border:'rgba(236,72,153,0.3)',text:'#ec4899',dot:'#ec4899'},
+    '普通': {bg:'rgba(161,161,170,0.08)',border:'rgba(161,161,170,0.2)',text:'#a1a1aa',dot:'#a1a1aa'}
+  };
+  container.innerHTML = TIERS.map(function(t){
+    var c = colors[t];
+    var w = state.tierWeights[t] || 0;
+    var cnt = getTierProducts(t).length;
+    var cssClass = t==='稀有'?'rare':(t==='欧皇'?'jackpot':'normal');
+    var pct = total>0 ? (w/total*100).toFixed(1) : '—';
+    return '<div class="tier-card '+cssClass+'">'+
+      '<div class="tier-dot"></div>'+
+      '<div class="tier-info"><div class="tier-name">'+t+'</div>'+
+      '<div class="tier-meta">'+cnt+' 个产品 · 占比 '+pct+'%</div></div>'+
+      '<input type="number" class="tier-weight-input" value="'+w+'" data-tier="'+t+'" min="0" step="1">'+
+      '</div>';
+  }).join('');
+}
+
+function renderProducts(){
+  var tbody = el('products-tbody');
+  var empty = el('empty-state');
+  var countEl = el('product-count');
+  countEl.textContent = state.products.length + ' 个产品';
+
+  if(state.products.length === 0){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = state.products.map(function(p,i){
+    var costWarn = (p.weight||0)*(p.cost||0) > 0 ? '' : ' style="color:var(--danger)"';
+    var rows = '';
+    rows += '<tr>';
+    rows += '<td class="cell-index">'+(i+1)+'</td>';
+    rows += '<td><input type="text" value="'+escHtml(p.id)+'" data-id="'+p._id+'" data-field="id" placeholder="输入ID"></td>';
+    rows += '<td><input type="text" value="'+escHtml(p.name)+'" data-id="'+p._id+'" data-field="name" placeholder="产品名称"></td>';
+    rows += '<td class="cell-tier"><select class="tier-select" data-id="'+p._id+'" data-field="tier">';
+    TIERS.forEach(function(t){
+      rows += '<option value="'+t+'"'+(p.tier===t?' selected':'')+'>'+t+'</option>';
+    });
+    rows += '</select></td>';
+    rows += '<td><input type="number" value="'+p.cost+'" data-id="'+p._id+'" data-field="cost" step="0.01" min="0.01" placeholder="0.00"></td>';
+    rows += '<td><input type="number" value="'+(p.sellPrice||'')+'" data-id="'+p._id+'" data-field="sellPrice" step="0.01" min="0" placeholder="0.00"></td>';
+    rows += '<td'+costWarn+'><input type="number" value="'+(p.weight||0)+'" data-id="'+p._id+'" data-field="weight" step="1" min="0"></td>';
+    rows += '<td><button class="btn btn-sm btn-danger btn-icon btn-del" data-id="'+p._id+'" title="删除">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'+
+      '</button></td>';
+    rows += '</tr>';
+    return rows;
+  }).join('');
+}
+
+function renderResults(){
+  var grid = el('results-grid');
+  var total = getTotalWeight();
+  var costPerDraw = expectedCostPerDraw();
+  var price = state.priceMode === 'manual' && state.manualPrice != null ? state.manualPrice : calcPrice();
+  var margin = state.priceMode === 'manual' ? calcMargin(price) : state.targetMargin;
+
+  el('stat-total-weight').textContent = total;
+  el('stat-margin').textContent = margin.toFixed(1) + '%';
+
+  if(price > 0 && state.priceMode === 'auto'){
+    el('cfg-price').placeholder = price.toFixed(2);
+  }
+
+  var colors = {
+    '稀有': {text:'#f59e0b'},
+    '欧皇': {text:'#ec4899'},
+    '普通': {text:'#a1a1aa'}
+  };
+
+  var tierCards = TIERS.map(function(tier){
+    var tw = state.tierWeights[tier] || 0;
+    var prob = total > 0 ? tw / total : 0;
+    var expected = prob > 0 ? Math.round(1/prob) : '∞';
+    var c = colors[tier];
+    var prods = getTierProducts(tier);
+    var tierCost = prods.reduce(function(s,p){ return s + (p.weight||0)*(p.cost||0); }, 0);
+
+    var html = '<div class="result-card">';
+    html += '<h3 style="color:'+c.text+'">◆ '+tier+'</h3>';
+    html += '<table class="pity-table">';
+    html += '<tr><td>权重</td><td>'+tw+'</td></tr>';
+    html += '<tr><td>概率</td><td>'+(prob*100).toFixed(2)+'%</td></tr>';
+    html += '<tr><td>期望抽数</td><td>'+expected+' 抽</td></tr>';
+    html += '<tr><td>产品数</td><td>'+prods.length+' 个</td></tr>';
+    html += '<tr><td>周期成本</td><td>¥'+tierCost.toFixed(2)+'</td></tr>';
+    html += '</table>';
+
+    html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+    html += '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">保底参考</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px">';
+    [0.5,0.8,0.95,0.99].forEach(function(conf){
+      var pity = prob > 0 ? calcPity(prob, conf) : '∞';
+      html += '<span style="color:var(--text3)">'+(conf*100)+'%</span>';
+      html += '<span style="text-align:right;font-family:var(--font-mono);font-weight:600">'+pity+' 抽</span>';
+    });
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }).join('');
+
+  var marginColor = margin >= 0 ? 'var(--success)' : 'var(--danger)';
+  var overviewCard = '<div class="result-card">'+
+    '<h3>整体概况</h3>'+
+    '<div class="overview-row"><span>总权重</span><span>'+total+'</span></div>'+
+    '<div class="overview-row"><span>单抽价格</span><span>¥'+(price||0).toFixed(2)+'</span></div>'+
+    '<div class="overview-row"><span>单抽预期成本</span><span>¥'+(costPerDraw||0).toFixed(2)+'</span></div>'+
+    '<div class="overview-row"><span>预期利润率</span><span style="color:'+marginColor+'">'+margin.toFixed(1)+'%</span></div>'+
+    '<div class="overview-row"><span>单抽预期毛利</span><span>¥'+((price||0)-costPerDraw).toFixed(2)+'</span></div>'+
+    '<div class="overview-row"><span>总产品数</span><span>'+state.products.length+'</span></div>'+
+    '</div>';
+
+  grid.innerHTML = overviewCard + tierCards;
+}
+
+function renderAll(){
+  renderTierConfig();
+  renderProducts();
+  renderResults();
+  saveState();
+}
+
+var toastTimer;
+function showToast(msg, isWarn){
+  var t = el('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isWarn ? ' warn' : '') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = 'toast'; }, 2000);
+}
+
+function onTierWeightChange(e){
+  var input = e.target;
+  if(!input.classList.contains('tier-weight-input')) return;
+  var tier = input.dataset.tier;
+  var val = parseInt(input.value, 10);
+  if(isNaN(val) || val < 0) val = 0;
+  state.tierWeights[tier] = val;
+  distributeWeights();
+  if(state.priceMode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+}
+
+function onProductInput(e){
+  var input = e.target;
+  var id = parseInt(input.dataset.id, 10);
+  if(isNaN(id)) return;
+  var field = input.dataset.field;
+  if(!field) return;
+  var prod = state.products.find(function(p){ return p._id === id; });
+  if(!prod) return;
+
+  if(field === 'id' || field === 'name'){
+    prod[field] = input.value;
+  } else if(field === 'weight'){
+    var w = parseInt(input.value, 10);
+    prod.weight = isNaN(w) || w < 0 ? 0 : w;
+  } else {
+    var v = parseFloat(input.value);
+    prod[field] = isNaN(v) ? (field==='sellPrice'?0:0.01) : v;
+  }
+
+  if(field !== 'weight' && field !== 'id' && field !== 'name'){
+    distributeWeights();
+  }
+  if(state.priceMode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+}
+
+function onDeleteClick(e){
+  var btn = e.target.closest('.btn-del');
+  if(!btn) return;
+  var id = parseInt(btn.dataset.id, 10);
+  state.products = state.products.filter(function(p){ return p._id !== id; });
+  distributeWeights();
+  if(state.priceMode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+  showToast('已删除产品');
+}
+
+function addProduct(){
+  var prod = {
+    _id: nextId++,
+    id: 'P' + String(nextId-1).padStart(2,'0'),
+    name: '',
+    tier: state.products.length > 0 ? state.products[state.products.length-1].tier : '普通',
+    cost: 10,
+    sellPrice: 0,
+    weight: 0
+  };
+  state.products.push(prod);
+  distributeWeights();
+  if(state.priceMode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+  showToast('已添加产品');
+  setTimeout(function(){
+    var input = document.querySelector('[data-id="'+prod._id+'"][data-field="name"]');
+    if(input){ input.focus(); input.select(); }
+  }, 50);
+}
+
+function onMarginChange(){
+  var v = parseFloat(el('cfg-margin').value);
+  state.targetMargin = isNaN(v) ? 0 : Math.max(0, Math.min(99, v));
+  if(state.priceMode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+}
+
+function onPriceChange(){
+  var v = parseFloat(el('cfg-price').value);
+  if(isNaN(v) || v <= 0){ state.manualPrice = null; }
+  else { state.manualPrice = v; }
+  renderAll();
+}
+
+function setPriceMode(mode){
+  state.priceMode = mode;
+  var btns = document.querySelectorAll('#mode-toggle button');
+  btns.forEach(function(b){
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  if(mode === 'auto'){ state.manualPrice = null; el('cfg-price').value = ''; }
+  renderAll();
+}
+
+function onModeToggle(e){
+  var btn = e.target.closest('button');
+  if(!btn || !btn.dataset.mode) return;
+  setPriceMode(btn.dataset.mode);
+}
+
+function exportCSV(){
+  var rows = [['产品ID','产品名称','等级','成本价','售价','权重']];
+  state.products.forEach(function(p){
+    rows.push([p.id,p.name,p.tier,p.cost,p.sellPrice||0,p.weight||0]);
+  });
+  rows.push([]);
+  rows.push(['等级','总权重','概率','期望抽数']);
+  var total = getTotalWeight();
+  TIERS.forEach(function(t){
+    var tw = state.tierWeights[t]||0;
+    var prob = total>0 ? tw/total : 0;
+    rows.push([t, tw, (prob*100).toFixed(2)+'%', prob>0 ? Math.round(1/prob) : '']);
+  });
+  rows.push([]);
+  var price = state.priceMode==='manual'&&state.manualPrice!=null ? state.manualPrice : calcPrice();
+  var margin = state.priceMode==='manual' ? calcMargin(price) : state.targetMargin;
+  rows.push(['总权重',total]);
+  rows.push(['单抽价格',price.toFixed(2)]);
+  rows.push(['预期利润率',margin.toFixed(1)+'%']);
+
+  var bom = '﻿';
+  var csv = bom + rows.map(function(r){
+    return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(',');
+  }).join('
+');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'blindbox_'+ new Date().toISOString().slice(0,10) +'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('已导出 CSV');
+}
+
+function parseCSVLine(line){
+  var result = []; var current = ''; var inQ = false;
+  for(var i=0; i<line.length; i++){
+    var ch = line[i];
+    if(inQ){
+      if(ch==='"'){ if(i+1<line.length && line[i+1]==='"'){ current+='"'; i++; } else inQ=false; }
+      else current+=ch;
+    } else {
+      if(ch==='"') inQ=true;
+      else if(ch===','){ result.push(current); current=''; }
+      else current+=ch;
+    }
+  }
+  result.push(current); return result;
+}
+
+function importCSV(){
+  var input = document.createElement('input');
+  input.type = 'file'; input.accept = '.csv';
+  input.onchange = function(){
+    var file = input.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var text = e.target.result;
+        if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        var lines = text.split(/?
+/).filter(function(l){ return l.trim(); });
+        if(lines.length < 2){ showToast('CSV格式无效', true); return; }
+        var header = parseCSVLine(lines[0]).map(function(h){ return h.replace(/"/g,'').trim(); });
+        var idIdx = header.indexOf('产品ID');
+        var nameIdx = header.indexOf('产品名称');
+        var tierIdx = header.indexOf('等级');
+        var costIdx = header.indexOf('成本价');
+        var sellIdx = header.indexOf('售价');
+        if(idIdx<0 || nameIdx<0){ showToast('CSV缺少必要列', true); return; }
+        state.products = [];
+        lines.slice(1).forEach(function(line){
+          var cols = parseCSVLine(line);
+          if(cols.length <= Math.max(idIdx,nameIdx)) return;
+          var tier = (tierIdx>=0 && cols[tierIdx]) ? cols[tierIdx].trim() : '普通';
+          if(TIERS.indexOf(tier) < 0) tier = '普通';
+          state.products.push({
+            _id: nextId++,
+            id: (cols[idIdx]||'').trim(),
+            name: (cols[nameIdx]||'').trim(),
+            tier: tier,
+            cost: parseFloat(cols[costIdx]) || 0.01,
+            sellPrice: parseFloat(cols[sellIdx]) || 0,
+            weight: 0
+          });
+        });
+        distributeWeights();
+        renderAll();
+        showToast('已导入 '+ state.products.length +' 个产品');
+      }catch(err){ showToast('导入失败', true); }
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+  input.click();
+}
+
+function resetAll(){
+  if(!confirm('确定要清空全部数据吗？此操作不可恢复。')) return;
+  state.products = [];
+  state.tierWeights = {'稀有':100,'欧皇':20,'普通':500};
+  state.targetMargin = 30;
+  state.priceMode = 'auto';
+  state.manualPrice = null;
+  nextId = 1;
+  el('cfg-margin').value = '30';
+  el('cfg-price').value = '';
+  setPriceMode('auto');
+  distributeWeights();
+  renderAll();
+  showToast('已重置');
+}
+
+function init(){
+  loadState();
+  el('cfg-margin').value = state.targetMargin;
+  if(state.priceMode === 'manual' && state.manualPrice != null){
+    el('cfg-price').value = state.manualPrice;
+  }
+  distributeWeights();
+  renderAll();
+  setPriceMode(state.priceMode);
+
+  el('tier-config').addEventListener('input', onTierWeightChange);
+  el('tier-config').addEventListener('change', onTierWeightChange);
+  el('products-tbody').addEventListener('input', onProductInput);
+  el('products-tbody').addEventListener('change', onProductInput);
+  el('products-tbody').addEventListener('click', onDeleteClick);
+  el('btn-add').addEventListener('click', addProduct);
+  el('cfg-margin').addEventListener('input', onMarginChange);
+  el('cfg-margin').addEventListener('change', onMarginChange);
+  el('cfg-price').addEventListener('input', onPriceChange);
+  el('cfg-price').addEventListener('change', onPriceChange);
+  el('mode-toggle').addEventListener('click', onModeToggle);
+  el('btn-export').addEventListener('click', exportCSV);
+  el('btn-import').addEventListener('click', importCSV);
+  el('btn-reset').addEventListener('click', resetAll);
+}
+
+init();
+})();
+</script>
+</body>
+</html>
