@@ -191,11 +191,20 @@
 <!-- AI 面板挂载点 -->
 <div id="aiPanelRoot"></div>
 
+<link rel="stylesheet" href="css/ai-panel.css">
+
 <!-- 脚本 -->
 <script src="js/api.js"></script>
 <script src="js/state.js"></script>
 <script src="js/import-export.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
+<script src="js/ai-panel.js"></script>
+<script>
+// 在 app.js 的 init() 之后初始化 AI 面板
+document.addEventListener('DOMContentLoaded', function () {
+  AIPanel.init();
+});
+</script>
 </body>
 </html>
