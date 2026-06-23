@@ -7,6 +7,6 @@ const htmlPath = path.join(__dirname, 'frontend', 'index.html');
 const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
 module.exports = function (req, res) {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.status(200).send(htmlContent);
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(htmlContent);
 };
