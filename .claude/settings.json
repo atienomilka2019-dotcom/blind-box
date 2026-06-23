@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node -e \"var fs = require\\('fs'\\); var html = fs.readFileSync\\('d:/克劳德 Code/blind-box-suite.html','utf-8'\\); var match = html.match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/\\); var js = match[1]; ['importFile','importCSVFile','importExcelFile','processImportedRows','parseCSVLine'].forEach\\(function\\(f\\){ console.log\\(f + ':', js.indexOf\\('function '+f+'\\('\\)>=0?'OK':'MISSING'\\); }\\); console.log\\('XLSX CDN:', js.indexOf\\('xlsx.full.min.js'\\)>=0?'OK':'MISSING'\\); console.log\\('accept xlsx:', js.indexOf\\('.xlsx'\\)>=0?'OK':'MISSING'\\);\")"
+    ]
+  }
+}
