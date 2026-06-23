@@ -13,9 +13,13 @@ app.use(express.json({ limit: '1mb' }));
 app.use(rateLimiter(30));
 
 // 确保 data 目录存在
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const dataDir = process.env.VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn('data 目录创建失败:', e.message);
 }
 
 // 静态文件：serve frontend 目录
