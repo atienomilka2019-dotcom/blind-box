@@ -6,7 +6,6 @@ const fs = require('fs');
 const { rateLimiter } = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.PORT || 8088;
 
 // 中间件
 app.use(cors());
@@ -22,13 +21,19 @@ if (!fs.existsSync(dataDir)) {
 // 静态文件：serve frontend 目录
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// API 路由（先注册占位，后续任务填充）
+// API 路由
 app.use('/api/products', require('./routes/products'));
 app.use('/api/steam', require('./routes/steam'));
 app.use('/api', require('./routes/chat'));
 app.use('/api', require('./routes/match'));
 
-// 启动
-app.listen(PORT, function () {
-  console.log('盲盒福袋搭配工具服务端已启动: http://localhost:' + PORT);
-});
+// Vercel Serverless 导出
+module.exports = app;
+
+// 本地开发时启动监听
+if (require.main === module) {
+  const PORT = process.env.PORT || 8088;
+  app.listen(PORT, function () {
+    console.log('盲盒福袋搭配工具服务端已启动: http://localhost:' + PORT);
+  });
+}
