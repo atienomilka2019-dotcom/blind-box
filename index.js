@@ -23,8 +23,13 @@ module.exports = function (req, res) {
 
   // API 路由转发
   if (url.startsWith('/api/')) {
-    const app = require('./backend/server');
-    return app(req, res);
+    try {
+      const app = require('./backend/server');
+      return app(req, res);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      return res.end('API Error: ' + e.message);
+    }
   }
 
   // 静态文件服务
