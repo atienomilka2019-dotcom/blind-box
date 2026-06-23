@@ -1,1 +1,2 @@
-.vercel
+.vercel/token
+.vercel/auth.json
