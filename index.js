@@ -1,12 +1,44 @@
-// Vercel Serverless 入口 — 返回前端 HTML 页面
+// Vercel Serverless 入口 — 完整前端 + API
 const path = require('path');
 const fs = require('fs');
 
-// 读取 HTML 内容（只在冷启动时加载一次）
+// 预加载 HTML 页面
 const htmlPath = path.join(__dirname, 'frontend', 'index.html');
 const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
+// MIME 类型映射
+const mimeTypes = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+};
+
 module.exports = function (req, res) {
+  const url = req.url || '/';
+
+  // API 路由转发
+  if (url.startsWith('/api/')) {
+    const app = require('./backend/server');
+    return app(req, res);
+  }
+
+  // 静态文件服务
+  const ext = path.extname(url).toLowerCase();
+  if (ext && mimeTypes[ext]) {
+    const filePath = path.join(__dirname, 'frontend', url);
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
+  }
+
+  // 默认返回 HTML
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(htmlContent);
 };
