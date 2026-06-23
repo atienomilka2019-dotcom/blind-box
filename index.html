@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盲盒福袋搭配工具</title>
+<style>
+/* ===== CSS 变量 ===== */
+:root {
+  --bg: #18181b; --surface: #27272a; --surface2: #3f3f46; --border: #52525b;
+  --text: #f4f4f5; --text2: #a1a1aa; --text3: #71717a;
+  --accent: #06b6d4; --accent-hover: #0891b2;
+  --rare: #f59e0b; --rare-bg: rgba(245,158,11,0.12); --rare-border: rgba(245,158,11,0.3);
+  --jackpot: #ec4899; --jackpot-bg: rgba(236,72,153,0.12); --jackpot-border: rgba(236,72,153,0.3);
+  --normal: #a1a1aa; --normal-bg: rgba(161,161,170,0.08); --normal-border: rgba(161,161,170,0.2);
+  --danger: #ef4444; --danger-hover: #dc2626; --success: #10b981; --warning: #f59e0b;
+  --radius: 10px; --radius-sm: 6px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  --shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+[data-theme="light"] {
+  --bg: #f0f2f5; --surface: #ffffff; --surface2: #f8fafc; --border: #e2e8f0;
+  --text: #1a1a2e; --text2: #475569; --text3: #94a3b8;
+  --accent: #6366f1; --accent-hover: #4f46e5;
+  --rare: #d97706; --rare-bg: rgba(245,158,11,0.08); --rare-border: rgba(245,158,11,0.25);
+  --jackpot: #db2777; --jackpot-bg: rgba(236,72,153,0.08); --jackpot-border: rgba(236,72,153,0.25);
+  --normal: #64748b; --normal-bg: rgba(100,116,139,0.06); --normal-border: rgba(100,116,139,0.15);
+  --danger: #dc2626; --danger-hover: #b91c1c; --success: #059669; --warning: #d97706;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;transition:background .3s,color .3s;}
+.app{max-width:1400px;margin:0 auto;padding:20px 20px 48px;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.header-left{display:flex;align-items:center;gap:10px;}
+.header-left h1{font-size:22px;font-weight:700;letter-spacing:-0.3px;}
+.header-left .ver{font-size:11px;color:var(--text3);padding:2px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font);}
+.btn:hover{background:var(--surface2);color:var(--text);}
+.btn svg{width:15px;height:15px;flex-shrink:0;}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+.btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
+.btn-danger{color:var(--danger);}
+.btn-danger:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-sm svg{width:13px;height:13px;}
+.btn-icon{padding:5px;min-width:32px;justify-content:center;}
+.btn-full{width:100%;justify-content:center;}
+
+/* 主题切换 */
+.theme-toggle{display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:var(--surface);cursor:pointer;font-size:13px;color:var(--text2);}
+.theme-toggle:hover{background:var(--surface2);}
+[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+[data-theme="light"] .theme-toggle .icon-moon{display:none;}
+
+/* 主布局 */
+.main-layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;}
+@media(max-width:900px){.main-layout{grid-template-columns:1fr;}}
+
+/* 卡片 */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.card+.card{margin-top:16px;}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* 表单 */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+.form-group input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:var(--font-mono);font-variant-numeric:tabular-nums;transition:border-color .15s;}
+.form-group input:focus{border-color:var(--accent);}
+.form-group .hint{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* 等级比例 */
+.tier-ratios-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.ratio-row{display:flex;gap:10px;}
+.ratio-item{flex:1;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:var(--radius-sm);text-align:center;}
+.ratio-item.rare{background:var(--rare-bg);border:1px solid var(--rare-border);}
+.ratio-item.jackpot{background:var(--jackpot-bg);border:1px solid var(--jackpot-border);}
+.ratio-item.normal{background:var(--normal-bg);border:1px solid var(--normal-border);}
+.ratio-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;margin:0 auto;}
+.ratio-badge.rare{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.ratio-badge.jackpot{background:linear-gradient(135deg,#ec4899,#db2777);}
+.ratio-badge.normal{background:linear-gradient(135deg,#6b7280,#4b5563);}
+.ratio-item input{width:100%;padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;text-align:center;outline:none;font-family:var(--font-mono);}
+.ratio-item input:focus{border-color:var(--accent);}
+
+/* 价格模式 */
+.mode-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg);}
+.mode-toggle button{flex:1;padding:8px 12px;border:none;background:transparent;color:var(--text3);font-size:12px;cursor:pointer;transition:all .15s;font-family:var(--font);white-space:nowrap;}
+.mode-toggle button.active{background:var(--accent);color:#fff;font-weight:600;}
+
+/* 产品表格 */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border);background:rgba(0,0,0,0.15);white-space:nowrap;}
+[data-theme="light"] thead th{background:#f8fafc;}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(128,128,128,0.08);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(128,128,128,0.04);}
+td input,td select{width:100%;padding:7px 9px;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-size:13px;outline:none;font-family:var(--font);transition:border-color .15s;}
+td input:focus,td select:focus{border-color:var(--accent);}
+td input:hover,td select:hover{border-color:var(--border);}
+td input[type=number]{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;}
+td .cell-index{color:var(--text3);text-align:center;font-size:12px;width:36px;}
+td .cell-weight{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:center;font-size:15px;font-weight:700;color:var(--accent);}
+.cell-tier{text-align:center;}
+.tier-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:0.3px;}
+.tier-badge.rare{background:var(--rare-bg);color:var(--rare);border:1px solid var(--rare-border);}
+.tier-badge.jackpot{background:var(--jackpot-bg);color:var(--jackpot);border:1px solid var(--jackpot-border);}
+.tier-badge.normal{background:var(--normal-bg);color:var(--text2);border:1px solid var(--normal-border);}
+td select.tier-select{font-weight:600;text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:22px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;}
+
+/* 空状态 */
+.empty-state{padding:40px 20px;text-align:center;color:var(--text3);}
+.empty-state .empty-icon{font-size:40px;margin-bottom:8px;opacity:0.4;}
+.empty-state p{font-size:14px;}
+
+/* 结果面板 */
+.results-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+.result-card{padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);}
+.result-card .r-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.result-card .r-value{font-size:24px;font-weight:700;font-family:var(--font-mono);line-height:1.1;}
+.result-card .r-value.accent{color:var(--accent);}
+.result-card .r-value.green{color:var(--success);}
+.result-card .r-value.red{color:var(--danger);}
+.result-card .r-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.tier-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;}
+.tier-card{padding:18px 20px;border-radius:var(--radius);border:1px solid var(--border);}
+.tier-card.rare{background:var(--rare-bg);border-color:var(--rare-border);}
+.tier-card.jackpot{background:var(--jackpot-bg);border-color:var(--jackpot-border);}
+.tier-card.normal{background:var(--normal-bg);border-color:var(--normal-border);}
+.tier-card .tier-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.tier-dot{width:10px;height:10px;border-radius:50%;}
+.tier-card.rare .tier-dot{background:var(--rare);box-shadow:0 0 8px rgba(245,158,11,0.4);}
+.tier-card.jackpot .tier-dot{background:var(--jackpot);box-shadow:0 0 8px rgba(236,72,153,0.4);}
+.tier-card.normal .tier-dot{background:var(--normal);}
+.tier-card .tier-name{font-size:14px;font-weight:600;}
+.tier-card.rare .tier-name{color:var(--rare);}
+.tier-card.jackpot .tier-name{color:var(--jackpot);}
+.tier-card.normal .tier-name{color:var(--text2);}
+.tier-stat-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;}
+.tier-stat-row .ts-label{color:var(--text3);}
+.tier-stat-row .ts-value{font-weight:600;font-family:var(--font-mono);}
+.pity-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;}
+.pity-grid .pg-label{color:var(--text3);}
+.pity-grid .pg-value{text-align:right;font-family:var(--font-mono);font-weight:600;}
+
+/* 产品池弹窗 */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.active{opacity:1;pointer-events:auto;}
+.modal{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:90vw;max-width:700px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-header h2{font-size:18px;font-weight:700;}
+.modal-body{overflow-y:auto;flex:1;min-height:0;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+.modal-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-close:hover{background:var(--surface2);color:var(--text);}
+
+/* 产品池表格 */
+.pool-table{width:100%;border-collapse:collapse;font-size:13px;}
+.pool-table th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;}
+.pool-table td{padding:6px 10px;border-bottom:1px solid rgba(128,128,128,0.06);}
+.pool-table tr{cursor:pointer;transition:background .1s;}
+.pool-table tr:hover{background:rgba(128,128,128,0.06);}
+.pool-table tr.selected{background:rgba(6,182,212,0.08);}
+[data-theme="light"] .pool-table tr.selected{background:rgba(99,102,241,0.08);}
+.pool-check{width:30px;text-align:center;}
+.pool-check input{width:16px;height:16px;cursor:pointer;}
+
+/* 搜索框 */
+.search-box{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px;margin-bottom:12px;outline:none;font-family:var(--font);}
+.search-box:focus{border-color:var(--accent);}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+.toast.show{opacity:1;}
+.toast.warn{background:rgba(245,158,11,0.12);border-color:var(--rare-border);color:var(--warning);}
+
+/* 响应式 */
+@media(max-width:768px){
+  .app{padding:12px 10px 32px;}
+  .header{flex-direction:column;align-items:flex-start;}
+  .header-actions{width:100%;}
+  .header-actions .btn{flex:1;justify-content:center;}
+  .results-overview{grid-template-columns:repeat(2,1fr);}
+  .tier-results{grid-template-columns:1fr;}
+  .ratio-row{flex-direction:column;}
+  .modal{width:95vw;max-height:90vh;padding:16px;}
+}
+@media(max-width:480px){
+  .mode-toggle{width:100%;}
+  .results-overview{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <h1>盲盒福袋搭配工具</h1>
+      <span class="ver">v3.1</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="btn btn-sm" onclick="importFile()">📋 导入文件</button>
+      <button class="btn btn-sm btn-accent" onclick="exportExcel()">📥 导出Excel</button>
+      <button class="btn btn-sm" onclick="loadDemo()">📦 示例数据</button>
+      <button class="btn btn-sm btn-danger" onclick="resetAll()">🔄 重置</button>
+    </div>
+  </div>
+
+  <!-- 主布局 -->
+  <div class="main-layout">
+    <!-- 左侧 -->
+    <aside>
+      <div class="card">
+        <div class="card-title">⚙️ 全局配置</div>
+        <div class="form-group">
+          <label>📊 总权重</label>
+          <input type="number" id="cfg-totalWeight" value="10000" min="1" step="1">
+          <div class="hint">所有产品权重之和，越大精度越高</div>
+        </div>
+
+        <div class="tier-ratios-label">🎚️ 等级权重比例</div>
+        <div class="form-group">
+          <div class="ratio-row">
+            <div class="ratio-item rare">
+              <span class="ratio-badge rare">⭐ 稀有</span>
+              <input type="number" id="cfg-ratioRare" value="1" min="0.1" step="0.1">
+            </div>
+            <div class="ratio-item jackpot">
+              <span class="ratio-badge jackpot">👑 欧皇</span>
+              <input type="number" id="cfg-ratioJackpot" value="3" min="0.1" step="0.1">
+            </div>
+            <div class="ratio-item normal">
+              <span class="ratio-badge normal">📦 普通</span>
+              <input type="number" id="cfg-ratioNormal" value="10" min="0.1" step="0.1">
+            </div>
+          </div>
+          <div class="hint">数值越大=权重越高=越容易抽中</div>
+        </div>
+
+        <div class="form-group">
+          <label>💎 目标利润率 (%)</label>
+          <input type="number" id="cfg-margin" value="30" min="0" max="99" step="0.1">
+          <div class="hint">利润率 = (价格-成本) / 价格 × 100%</div>
+        </div>
+
+        <div class="form-group">
+          <label>🎫 定价模式</label>
+          <div class="mode-toggle" id="modeToggle">
+            <button data-mode="auto" class="active" onclick="setPriceMode('auto')">自动计算价格</button>
+            <button data-mode="manual" onclick="setPriceMode('manual')">手动设定价格</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>🎚️ 等级比例模式</label>
+          <div class="mode-toggle" id="ratioModeToggle">
+            <button data-mode="manual" class="active" onclick="setRatioMode('manual')">手动设定比例</button>
+            <button data-mode="auto" onclick="setRatioMode('auto')">自动反推比例</button>
+          </div>
+          <div class="hint" id="ratioModeHint">设定稀有:欧皇:普通的权重比例</div>
+        </div>
+
+        <div class="form-group" id="ratioHintGroup">
+        </div>
+
+        <div class="form-group" id="manualPriceGroup" style="display:none">
+          <label>手动单抽价格 (¥)</label>
+          <input type="number" id="cfg-manualPrice" value="0" min="0.01" step="0.01">
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <button class="btn btn-accent btn-full" onclick="addProduct()" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          添加产品
+        </button>
+        <button class="btn btn-accent btn-full" onclick="openProductPool()" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          从产品池选择
+        </button>
+        <hr class="section-divider" style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+        <button class="btn btn-full" onclick="importFile()">📋 导入文件（CSV / Excel）</button>
+        <button class="btn btn-full" onclick="exportExcel()">📥 导出 Excel</button>
+        <button class="btn btn-full" onclick="loadDemo()">📦 加载示例数据</button>
+        <button class="btn btn-danger btn-full" onclick="resetAll()">🗑️ 重置全部数据</button>
+      </div>
+    </aside>
+
+    <!-- 右侧主区域 -->
+    <main>
+      <div class="card">
+        <div class="card-title">
+          📦 产品列表
+          <span id="productCount" style="font-weight:400;font-size:12px;color:var(--text3);margin-left:4px;">0 个产品</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th style="width:110px">产品ID</th>
+                <th style="min-width:140px">产品名称</th>
+                <th style="width:100px">原价 (¥)</th>
+                <th style="width:100px">成本价 (¥)</th>
+                <th style="width:100px">等级</th>
+                <th style="width:80px">权重</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody id="productsTbody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📭</div>
+          <p>还没有产品，点击「添加产品」或「从产品池选择」</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px" id="resultsCard">
+        <div class="card-title">📈 计算结果</div>
+        <div class="results-overview" id="resultsOverview"></div>
+        <div class="tier-results" id="tierResults"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 产品池弹窗 -->
+<div class="modal-overlay" id="poolOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📋 产品池</h2>
+      <button class="modal-close" onclick="closeProductPool()">✕</button>
+    </div>
+    <input type="text" class="search-box" id="poolSearch" placeholder="🔍 搜索产品名称或ID..." oninput="renderPoolTable()">
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="pool-table">
+          <thead>
+            <tr>
+              <th class="pool-check">选</th>
+              <th>产品ID</th>
+              <th>产品名称</th>
+              <th>原价 (¥)</th>
+              <th>成本价 (¥)</th>
+              <th>等级</th>
+            </tr>
+          </thead>
+          <tbody id="poolTbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="poolEmptyState">
+        <div class="empty-icon">📭</div>
+        <p>产品池为空，请先导入 CSV 文件</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span id="poolSelectedCount" style="font-size:13px;color:var(--text3);margin-right:auto;">已选 0 个</span>
+      <button class="btn btn-sm" onclick="addEmptyPoolItem()" style="margin-right:auto">+ 新增</button>
+      <button class="btn btn-danger btn-sm" onclick="clearPool()">清空池</button>
+      <button class="btn" onclick="closeProductPool()">取消</button>
+      <button class="btn btn-accent" onclick="addFromPool()">添加到搭配列表</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ===== 常量 =====
+var TIERS = ['稀有','欧皇','普通'];
+var STORAGE_KEY = 'blindbox_state_v4';
+var POOL_STORAGE_KEY = 'blindbox_pool_v1';
+
+// ===== 全局状态 =====
+var state = {
+  products: [],
+  totalWeight: 10000,
+  tierRatios: {'稀有':1,'欧皇':3,'普通':10},
+  targetMargin: 30,
+  priceMode: 'auto',
+  manualPrice: null,
+  ratioMode: 'manual',
+  theme: 'dark'
+};
+var nextId = 1;
+
+// 产品池
+var productPool = [];
+var poolSelections = {}; // { poolIndex: true }
+
+// ===== 持久化 =====
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var s = JSON.parse(raw);
+      if(s.products) state.products = s.products;
+      if(typeof s.totalWeight === 'number') state.totalWeight = s.totalWeight;
+      if(s.tierRatios) state.tierRatios = s.tierRatios;
+      if(typeof s.targetMargin === 'number') state.targetMargin = s.targetMargin;
+      if(s.priceMode) state.priceMode = s.priceMode;
+      if(s.manualPrice != null) state.manualPrice = s.manualPrice;
+      if(s.ratioMode) state.ratioMode = s.ratioMode;
+      if(s.theme) state.theme = s.theme;
+      if(s.nextId) nextId = s.nextId;
+    }
+  }catch(e){}
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      products: state.products, totalWeight: state.totalWeight,
+      tierRatios: state.tierRatios, targetMargin: state.targetMargin,
+      priceMode: state.priceMode, manualPrice: state.manualPrice, ratioMode: state.ratioMode,
+      theme: state.theme, nextId: nextId
+    }));
+  }catch(e){}
+}
+function loadProductPool(){
+  try{
+    var raw = localStorage.getItem(POOL_STORAGE_KEY);
+    if(raw) productPool = JSON.parse(raw);
+  }catch(e){ productPool = []; }
+}
+function saveProductPool(){
+  try{
+    localStorage.setItem(POOL_STORAGE_KEY, JSON.stringify(productPool));
+  }catch(e){}
+}
+
+// ===== 工具函数 =====
+function el(id){ return document.getElementById(id); }
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+var toastTimer;
+function showToast(msg, isWarn){
+  var t = el('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isWarn ? ' warn' : '') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = 'toast'; }, 2200);
+}
+function getTierProducts(tier){ return state.products.filter(function(p){ return p.tier === tier; }); }
+
+// ===== 核心计算 =====
+function compute(){
+  var totalW = state.totalWeight;
+  var ratios = state.tierRatios;
+  var margin = state.targetMargin / 100;
+
+  // 自动反推比例：根据成本结构和产品分布，自动算最优等级比例
+  if(state.ratioMode === 'auto'){
+    var tierAvgCost = {};
+    TIERS.forEach(function(t){
+      var prods = getTierProducts(t);
+      if(prods.length === 0){ tierAvgCost[t] = 1; return; }
+      tierAvgCost[t] = prods.reduce(function(s,p){ return s + p.cost; },0) / prods.length;
+    });
+    TIERS.forEach(function(t){
+      var prods = getTierProducts(t);
+      var cnt = prods.length || 1;
+      ratios[t] = (1 / (tierAvgCost[t] || 1)) * Math.pow(cnt, 0.3);
+    });
+    var minR = Math.min.apply(null, TIERS.map(function(t){ return ratios[t]; }));
+    TIERS.forEach(function(t){ ratios[t] = ratios[t] / minR; });
+    // 同步回 UI
+    var rareEl = el('cfg-ratioRare'); if(rareEl) rareEl.value = ratios['稀有'].toFixed(2);
+    var jackEl = el('cfg-ratioJackpot'); if(jackEl) jackEl.value = ratios['欧皇'].toFixed(2);
+    var normEl = el('cfg-ratioNormal'); if(normEl) normEl.value = ratios['普通'].toFixed(2);
+  }
+
+  // 1. 计算等级总权重
+  var ratioSum = TIERS.reduce(function(s,t){ return s + (ratios[t]||1); },0);
+  var tierWeights = {};
+  TIERS.forEach(function(t){ tierWeights[t] = totalW * (ratios[t]||1) / ratioSum; });
+
+  var allAllocated = [];
+  TIERS.forEach(function(tier){
+    var prods = getTierProducts(tier);
+    var tw = tierWeights[tier];
+    if(prods.length === 0 || tw <= 0) return;
+    var costs = prods.map(function(p){ return p.cost > 0 ? p.cost : 0.01; });
+    var invSum = costs.reduce(function(s,c){ return s + 1/c; },0);
+    var floats = costs.map(function(c){ return (1/c)/invSum * tw; });
+    var ints = floats.map(function(f){ return Math.max(1, Math.floor(f)); });
+    var remainders = floats.map(function(f,i){ return f - ints[i]; });
+    var allocated = ints.reduce(function(a,b){ return a+b; },0);
+    var remaining = Math.round(tw) - allocated;
+    var indices = remainders.map(function(r,i){ return i; });
+    indices.sort(function(a,b){ return remainders[b] - remainders[a]; });
+    for(var j=0; j<Math.min(Math.abs(remaining), indices.length); j++){
+      if(remaining > 0) ints[indices[j]]++;
+      else if(remaining < 0 && ints[indices[j]] > 1) ints[indices[j]]--;
+    }
+    prods.forEach(function(p,i){ p.weight = ints[i]; });
+    allAllocated = allAllocated.concat(prods);
+  });
+
+  var actualTotal = allAllocated.reduce(function(s,p){ return s + (p.weight||0); },0) || 1;
+  var expectedCost = allAllocated.reduce(function(s,p){ return s + (p.weight||0)*(p.cost||0); },0) / actualTotal;
+
+  var price, actualMargin;
+  if(state.priceMode === 'manual' && state.manualPrice != null){
+    price = state.manualPrice;
+    actualMargin = price > 0 ? (actualTotal * price - allAllocated.reduce(function(s,p){ return s + (p.weight||0)*(p.cost||0); },0)) / (actualTotal*price)*100 : 0;
+  } else {
+    if(margin >= 1) price = expectedCost * 100;
+    else price = expectedCost / (1 - margin);
+    actualMargin = state.targetMargin;
+    state.manualPrice = null;
+  }
+
+  var tierData = {};
+  TIERS.forEach(function(tier){
+    var prods = getTierProducts(tier);
+    var tw = prods.reduce(function(s,p){ return s + (p.weight||0); },0);
+    var prob = actualTotal > 0 ? tw / actualTotal : 0;
+    var pity = {};
+    [0.5,0.8,0.95,0.99].forEach(function(c){ pity[c] = calcPity(prob, c); });
+    tierData[tier] = {
+      weight: tw, prob: prob,
+      expected: prob > 0 ? Math.round(1/prob) : Infinity,
+      productCount: prods.length, pity: pity,
+      totalCost: prods.reduce(function(s,p){ return s + (p.weight||0)*(p.cost||0); },0)
+    };
+  });
+
+  return {
+    actualTotal: actualTotal, expectedCost: expectedCost,
+    price: price, actualMargin: actualMargin,
+    tierData: tierData, profitPerDraw: price - expectedCost
+  };
+}
+
+function calcPity(prob, confidence){
+  if(prob >= 1) return 1; if(prob <= 0) return Infinity;
+  return Math.ceil(Math.log(1 - confidence) / Math.log(1 - prob));
+}
+
+// ===== 防抖函数 =====
+var debounceTimer;
+function debounce(fn, delay){
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(fn, delay);
+}
+
+// ===== 读取配置输入（不触发 renderAll，只读不写） =====
+function readConfigFromUI(){
+  // 直接用 parseInt/parseFloat 支持大数
+  var tw = parseInt(el('cfg-totalWeight').value, 10);
+  if(isNaN(tw) || tw < 1) tw = 10000;
+  state.totalWeight = tw;
+
+  state.tierRatios['稀有'] = parseFloat(el('cfg-ratioRare').value) || 1;
+  if(state.tierRatios['稀有'] < 0.1) state.tierRatios['稀有'] = 0.1;
+  state.tierRatios['欧皇'] = parseFloat(el('cfg-ratioJackpot').value) || 1;
+  if(state.tierRatios['欧皇'] < 0.1) state.tierRatios['欧皇'] = 0.1;
+  state.tierRatios['普通'] = parseFloat(el('cfg-ratioNormal').value) || 1;
+  if(state.tierRatios['普通'] < 0.1) state.tierRatios['普通'] = 0.1;
+
+  var m = parseFloat(el('cfg-margin').value);
+  if(isNaN(m) || m < 0) m = 0; if(m > 99) m = 99;
+  state.targetMargin = m;
+
+  if(state.priceMode === 'manual'){
+    var mp = parseFloat(el('cfg-manualPrice').value);
+    state.manualPrice = (!isNaN(mp) && mp > 0) ? mp : null;
+  } else {
+    state.manualPrice = null;
+  }
+}
+
+// ===== 渲染 =====
+function renderProducts(){
+  var tbody = el('productsTbody');
+  var empty = el('emptyState');
+  var countEl = el('productCount');
+  countEl.textContent = state.products.length + ' 个产品';
+
+  if(state.products.length === 0){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = state.products.map(function(p,i){
+    var tierOpts = TIERS.map(function(t){
+      return '<option value="'+t+'"'+(p.tier===t?' selected':'')+'>'+t+'</option>';
+    }).join('');
+    return '<tr>'+
+      '<td class="cell-index">'+(i+1)+'</td>'+
+      '<td><input type="text" value="'+escapeHtml(p.id)+'" data-id="'+p._id+'" data-field="id" placeholder="输入ID"></td>'+
+      '<td><input type="text" value="'+escapeHtml(p.name)+'" data-id="'+p._id+'" data-field="name" placeholder="产品名称"></td>'+
+      '<td><input type="number" value="'+(p.marketPrice!=null?p.marketPrice:'')+'" data-id="'+p._id+'" data-field="marketPrice" step="0.01" min="0" placeholder="参考价" style="font-size:12px;color:var(--text2);"></td>'+
+      '<td><input type="number" value="'+p.cost+'" data-id="'+p._id+'" data-field="cost" step="0.01" min="0.01" placeholder="0.00"></td>'+
+      '<td class="cell-tier"><select class="tier-select" data-id="'+p._id+'" data-field="tier">'+tierOpts+'</select></td>'+
+      '<td class="cell-weight">'+(p.weight||0)+'</td>'+
+      '<td><button class="btn btn-sm btn-danger btn-icon btn-del" data-id="'+p._id+'" title="删除">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'+
+        '</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+function renderResults(){
+  var result = compute();
+  var overviewEl = el('resultsOverview');
+  var marginColor = result.actualMargin >= 0 ? 'green' : 'red';
+  overviewEl.innerHTML =
+    '<div class="result-card"><div class="r-label">总权重</div><div class="r-value accent">'+result.actualTotal+'</div></div>'+
+    '<div class="result-card"><div class="r-label">单抽价格</div><div class="r-value accent">¥'+result.price.toFixed(2)+'</div><div class="r-sub">'+(state.priceMode==='auto'?'自动计算':'手动设定')+'</div></div>'+
+    '<div class="result-card"><div class="r-label">期望成本</div><div class="r-value">¥'+result.expectedCost.toFixed(2)+'</div><div class="r-sub">单抽理论成本</div></div>'+
+    '<div class="result-card"><div class="r-label">预期利润率</div><div class="r-value '+marginColor+'">'+result.actualMargin.toFixed(1)+'%</div></div>'+
+    '<div class="result-card"><div class="r-label">单抽毛利</div><div class="r-value '+marginColor+'">¥'+result.profitPerDraw.toFixed(2)+'</div></div>'+
+    '<div class="result-card"><div class="r-label">产品总数</div><div class="r-value">'+state.products.length+'</div></div>';
+
+  var tierEl = el('tierResults');
+  tierEl.innerHTML = TIERS.map(function(tier){
+    var d = result.tierData[tier];
+    var cssCls = tier==='稀有'?'rare':(tier==='欧皇'?'jackpot':'normal');
+    var pityHtml = '';
+    [0.5,0.8,0.95,0.99].forEach(function(conf){
+      var val = d.pity[conf];
+      pityHtml += '<span class="pg-label">'+Math.round(conf*100)+'%</span><span class="pg-value">'+(val===Infinity?'∞':val+' 抽')+'</span>';
+    });
+    return '<div class="tier-card '+cssCls+'">'+
+      '<div class="tier-header"><div class="tier-dot"></div><div class="tier-name">'+tier+'</div></div>'+
+      '<div class="tier-stat-row"><span class="ts-label">等级权重</span><span class="ts-value">'+d.weight+'</span></div>'+
+      '<div class="tier-stat-row"><span class="ts-label">概率</span><span class="ts-value">'+(d.prob*100).toFixed(2)+'%</span></div>'+
+      '<div class="tier-stat-row"><span class="ts-label">期望抽数</span><span class="ts-value">'+(d.expected===Infinity?'∞':d.expected+' 抽')+'</span></div>'+
+      '<div class="tier-stat-row"><span class="ts-label">产品数</span><span class="ts-value">'+d.productCount+' 个</span></div>'+
+      '<div class="tier-stat-row"><span class="ts-label">周期成本</span><span class="ts-value">¥'+d.totalCost.toFixed(2)+'</span></div>'+
+      '<div class="pity-grid">'+pityHtml+'</div></div>';
+  }).join('');
+}
+
+function renderAll(){
+  renderProducts();
+  renderResults();
+  saveState();
+}
+
+// ===== 配置同步 =====
+function syncConfigToUI(){
+  el('cfg-totalWeight').value = state.totalWeight;
+  el('cfg-ratioRare').value = state.tierRatios['稀有'];
+  el('cfg-ratioJackpot').value = state.tierRatios['欧皇'];
+  el('cfg-ratioNormal').value = state.tierRatios['普通'];
+  el('cfg-margin').value = state.targetMargin;
+  if(state.priceMode === 'manual' && state.manualPrice != null){
+    el('cfg-manualPrice').value = state.manualPrice;
+  }
+  setPriceModeUI(state.priceMode);
+  setRatioModeUI(state.ratioMode);
+}
+
+// ===== 产品输入事件（使用 change + 防抖，不阻塞打字） =====
+function onProductInput(e){
+  var input = e.target;
+  var id = parseInt(input.dataset.id, 10);
+  if(isNaN(id)) return;
+  var field = input.dataset.field;
+  if(!field) return;
+  var prod = state.products.find(function(p){ return p._id === id; });
+  if(!prod) return;
+
+  if(field === 'id' || field === 'name'){
+    prod[field] = input.value;
+  } else if(field === 'cost'){
+    var v = parseFloat(input.value);
+    prod.cost = isNaN(v) || v <= 0 ? 0.01 : v;
+  } else if(field === 'marketPrice'){
+    var v2 = parseFloat(input.value);
+    prod.marketPrice = isNaN(v2) || v2 < 0 ? null : v2;
+  } else if(field === 'tier'){
+    prod.tier = input.value;
+  }
+  if(state.priceMode === 'auto'){ state.manualPrice = null; }
+  // 使用防抖延迟更新，避免打字卡顿
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(function(){ renderAll(); }, 400);
+}
+
+function onDeleteClick(e){
+  var btn = e.target.closest('.btn-del');
+  if(!btn) return;
+  var id = parseInt(btn.dataset.id, 10);
+  state.products = state.products.filter(function(p){ return p._id !== id; });
+  renderAll();
+  showToast('已删除产品');
+}
+
+function addProduct(data){
+  data = data || {};
+  var prod = {
+    _id: nextId++,
+    id: data.id || ('P' + String(nextId-1).padStart(2,'0')),
+    name: data.name || '',
+    tier: data.tier || (state.products.length > 0 ? state.products[state.products.length-1].tier : '普通'),
+    cost: data.cost || 10,
+    marketPrice: data.marketPrice != null ? data.marketPrice : null,
+    weight: 0
+  };
+  state.products.push(prod);
+  if(state.priceMode === 'auto'){ state.manualPrice = null; }
+  renderAll();
+  return prod;
+}
+
+// ===== 配置变更 =====
+function onConfigChange(){
+  readConfigFromUI();
+  renderAll();
+}
+
+// ===== 配置变更防抖版（oninput用） =====
+function onConfigInput(){
+  readConfigFromUI();
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(function(){ renderAll(); }, 350);
+}
+
+// ===== 定价模式 =====
+function setPriceModeUI(mode){
+  var btns = document.querySelectorAll('#modeToggle button');
+  btns.forEach(function(b){ b.classList.toggle('active', b.dataset.mode === mode); });
+  el('manualPriceGroup').style.display = mode==='manual' ? 'block' : 'none';
+}
+function setRatioModeUI(mode){
+  var btns = document.querySelectorAll('#ratioModeToggle button');
+  if(btns.length === 0) return;
+  btns.forEach(function(b){ b.classList.toggle('active', b.dataset.mode === mode); });
+  var hint = el('ratioModeHint');
+  if(!hint) return;
+  var ratioInputs = document.querySelectorAll('#cfg-ratioRare, #cfg-ratioJackpot, #cfg-ratioNormal');
+  if(mode === 'auto'){
+    hint.textContent = '系统根据成本结构自动计算最优等级比例';
+    ratioInputs.forEach(function(inp){ inp.disabled = true; inp.style.opacity = '0.5'; });
+  } else {
+    hint.textContent = '数值越大=权重越高=越容易抽中';
+    ratioInputs.forEach(function(inp){ inp.disabled = false; inp.style.opacity = '1'; });
+  }
+}
+function setRatioMode(mode){
+  state.ratioMode = mode;
+  setRatioModeUI(mode);
+  renderAll();
+}
+function setPriceMode(mode){
+  state.priceMode = mode;
+  setPriceModeUI(mode);
+  if(mode === 'manual'){
+    var val = parseFloat(el('cfg-manualPrice').value);
+    state.manualPrice = (!isNaN(val) && val > 0) ? val : null;
+  } else {
+    state.manualPrice = null;
+    el('cfg-manualPrice').value = '';
+  }
+  renderAll();
+}
+
+// ===== 主题切换 =====
+function toggleTheme(){
+  var doc = document.documentElement;
+  var current = doc.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  doc.setAttribute('data-theme', next);
+  state.theme = next;
+  saveState();
+}
+
+// ===== 产品池 =====
+function renderPoolTable(){
+  var search = (el('poolSearch').value || '').toLowerCase();
+  var pool = productPool;
+  if(search){
+    pool = pool.filter(function(p){
+      return (p.id||'').toLowerCase().indexOf(search) >= 0 || (p.name||'').toLowerCase().indexOf(search) >= 0;
+    });
+  }
+  var tbody = el('poolTbody');
+  var empty = el('poolEmptyState');
+  if(pool.length === 0){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = pool.map(function(p,i){
+      var realIdx = productPool.indexOf(p);
+      var checked = poolSelections[realIdx] ? ' checked' : '';
+      var rowClass = poolSelections[realIdx] ? ' class="selected"' : '';
+      var tierOpts = TIERS.map(function(t){
+        return '<option value="'+t+'"'+(p.tier===t?' selected':'')+'>'+t+'</option>';
+      }).join('');
+      return '<tr'+rowClass+'>'+
+        '<td class="pool-check"><input type="checkbox"'+checked+' data-pool-idx="'+realIdx+'" onchange="togglePoolCheck(this)"></td>'+
+        '<td><input type="text" value="'+escapeHtml(p.id)+'" data-pool-idx="'+realIdx+'" data-field="id" class="pool-edit" style="width:100%;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:4px 6px;font-family:var(--font);" onchange="savePoolItem(this)"></td>'+
+        '<td><input type="text" value="'+escapeHtml(p.name)+'" data-pool-idx="'+realIdx+'" data-field="name" class="pool-edit" style="width:100%;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:4px 6px;font-family:var(--font);" onchange="savePoolItem(this)"></td>'+
+        '<td><input type="number" value="'+(p.marketPrice!=null?p.marketPrice:'')+'" data-pool-idx="'+realIdx+'" data-field="marketPrice" class="pool-edit" step="0.01" min="0" placeholder="参考价" style="width:100%;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:4px 6px;font-family:var(--font-mono);text-align:right;" onchange="savePoolItem(this)"></td>'+
+        '<td><input type="number" value="'+p.cost+'" data-pool-idx="'+realIdx+'" data-field="cost" class="pool-edit" step="0.01" min="0.01" style="width:100%;background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:4px 6px;font-family:var(--font-mono);text-align:right;" onchange="savePoolItem(this)"></td>'+
+        '<td class="cell-tier"><select data-pool-idx="'+realIdx+'" data-field="tier" class="pool-edit tier-select" onchange="savePoolItem(this)">'+tierOpts+'</select></td>'+
+        '<td><button class="btn btn-sm btn-danger btn-icon" onclick="deletePoolItem('+realIdx+')" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>'+
+        '</tr>';
+    }).join('');
+  }
+  updatePoolCount();
+}
+
+function updatePoolCount(){
+  var count = Object.keys(poolSelections).filter(function(k){ return poolSelections[k]; }).length;
+  var elCount = el('poolSelectedCount');
+  if(elCount) elCount.textContent = '已选 ' + count + ' 个';
+}
+
+function savePoolItem(el){
+  var idx = parseInt(el.getAttribute('data-pool-idx'), 10);
+  var field = el.getAttribute('data-field');
+  if(isNaN(idx) || !field || idx >= productPool.length) return;
+  var p = productPool[idx];
+  if(!p) return;
+  if(field === 'id' || field === 'name'){
+    p[field] = el.value;
+  } else if(field === 'cost'){
+    var v = parseFloat(el.value);
+    p.cost = isNaN(v) || v <= 0 ? 0.01 : v;
+  } else if(field === 'marketPrice'){
+    var v2 = parseFloat(el.value);
+    p.marketPrice = isNaN(v2) || v2 < 0 ? null : v2;
+  } else if(field === 'tier'){
+    p.tier = el.value;
+  }
+  saveProductPool();
+}
+
+function deletePoolItem(idx){
+  if(!confirm('确定要从产品池删除「'+(productPool[idx].name||productPool[idx].id)+'」吗？')) return;
+  productPool.splice(idx, 1);
+  // 清理选中状态
+  var newSelections = {};
+  Object.keys(poolSelections).forEach(function(k){
+    var oldIdx = parseInt(k);
+    if(oldIdx < idx) newSelections[oldIdx] = poolSelections[k];
+    else if(oldIdx > idx) newSelections[oldIdx-1] = poolSelections[k];
+  });
+  poolSelections = newSelections;
+  saveProductPool();
+  renderPoolTable();
+  showToast('已从产品池删除');
+}
+
+function addEmptyPoolItem(){
+  productPool.push({ id: '', name: '', tier: '普通', cost: 10, marketPrice: null });
+  saveProductPool();
+  renderPoolTable();
+  showToast('已添加空白产品到产品池');
+  // 聚焦新建行的名称输入
+  setTimeout(function(){
+    var inputs = document.querySelectorAll('.pool-edit[data-field="name"]');
+    var last = inputs[inputs.length-1];
+    if(last){ last.focus(); last.select(); }
+  }, 100);
+}
+
+function togglePoolCheck(cb){
+  var idx = parseInt(cb.getAttribute('data-pool-idx'), 10);
+  poolSelections[idx] = cb.checked;
+  updatePoolCount();
+  renderPoolTable();
+}
+
+function clearPool(){
+  if(productPool.length === 0){ showToast('产品池已为空'); return; }
+  if(!confirm('确定要清空产品池全部 '+productPool.length+' 个产品吗？此操作不可恢复。')) return;
+  productPool = [];
+  poolSelections = {};
+  saveProductPool();
+  renderPoolTable();
+  showToast('已清空产品池');
+}
+
+function openProductPool(){
+  poolSelections = {};
+  el('poolSearch').value = '';
+  el('poolOverlay').classList.add('active');
+  renderPoolTable();
+}
+
+function closeProductPool(){
+  el('poolOverlay').classList.remove('active');
+}
+
+function addFromPool(){
+  var selected = Object.keys(poolSelections).filter(function(k){ return poolSelections[k]; });
+  if(selected.length === 0){ showToast('请先选择产品', true); return; }
+  selected.forEach(function(idx){
+    var p = productPool[parseInt(idx)];
+    addProduct({ id: p.id, name: p.name, tier: p.tier, cost: p.cost, marketPrice: p.marketPrice });
+  });
+  showToast('已添加 ' + selected.length + ' 个产品');
+  closeProductPool();
+  poolSelections = {};
+}
+
+// ===== Excel 导出 =====
+function exportExcel(){
+  var result = compute();
+  var rows = [];
+  rows.push(['产品明细表']);
+  rows.push(['序号','产品ID','产品名称','原价(¥)','成本价(¥)','等级','权重']);
+  state.products.forEach(function(p,i){
+    rows.push([i+1, p.id, p.name, p.marketPrice!=null?p.marketPrice.toFixed(2):'', p.cost.toFixed(2), p.tier, p.weight||0]);
+  });
+  rows.push([]);
+  rows.push(['等级汇总']);
+  rows.push(['等级','等级权重','概率','期望抽数','50%保底','80%保底','95%保底','99%保底','产品数','周期成本(¥)']);
+  TIERS.forEach(function(tier){
+    var d = result.tierData[tier];
+    rows.push([tier, d.weight, (d.prob*100).toFixed(2)+'%', d.expected===Infinity?'∞':d.expected,
+      d.pity[0.5]===Infinity?'∞':d.pity[0.5], d.pity[0.8]===Infinity?'∞':d.pity[0.8],
+      d.pity[0.95]===Infinity?'∞':d.pity[0.95], d.pity[0.99]===Infinity?'∞':d.pity[0.99],
+      d.productCount, d.totalCost.toFixed(2)]);
+  });
+  rows.push([]);
+  rows.push(['全局概览']);
+  rows.push(['总权重', result.actualTotal]);
+  rows.push(['单抽价格(¥)', result.price.toFixed(2)]);
+  rows.push(['期望成本(¥)', result.expectedCost.toFixed(2)]);
+  rows.push(['预期利润率', result.actualMargin.toFixed(1)+'%']);
+  rows.push(['单抽毛利(¥)', result.profitPerDraw.toFixed(2)]);
+  rows.push(['产品总数', state.products.length]);
+  rows.push(['定价模式', state.priceMode==='auto'?'自动计算':'手动设定']);
+
+  var csv = '﻿' + rows.map(function(r){
+    return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(',');
+  }).join('\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '盲盒搭配_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('已导出 Excel 兼容格式 (CSV)');
+}
+
+// ===== CSV 解析 =====
+function parseCSVLine(line){
+  var result = []; var current = ''; var inQ = false;
+  for(var i=0; i<line.length; i++){
+    var ch = line[i];
+    if(inQ){
+      if(ch==='"'){ if(i+1<line.length && line[i+1]==='"'){ current+='"'; i++; } else inQ=false; }
+      else current+=ch;
+    } else {
+      if(ch==='"') inQ=true;
+      else if(ch===','){ result.push(current); current=''; }
+      else current+=ch;
+    }
+  }
+  result.push(current); return result;
+}
+
+// ===== 统一导入入口（CSV / Excel） =====
+// 支持格式：
+//   - .csv / .txt：文本格式，智能识别列结构
+//   - .xlsx / .xls：Excel 格式（通过 SheetJS CDN 读取）
+function importFile(){
+  var input = document.createElement('input');
+  input.type = 'file'; input.accept = '.csv,.txt,.xlsx,.xls';
+  input.onchange = function(){
+    var file = input.files[0]; if(!file) return;
+    var ext = (file.name || '').split('.').pop().toLowerCase();
+
+    if(ext === 'xlsx' || ext === 'xls'){
+      importExcelFile(file);
+    } else {
+      importCSVFile(file);
+    }
+  };
+  input.click();
+}
+
+// ===== Excel 导入 =====
+function importExcelFile(file){
+  // 动态加载 SheetJS
+  var existingScript = document.querySelector('script[src*="xlsx"]');
+  var doRead = function(){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, {type: 'array'});
+        var firstSheet = workbook.SheetNames[0];
+        var sheet = workbook.Sheets[firstSheet];
+        // 转为二维数组
+        var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+        if(!rows || rows.length === 0){ showToast('Excel为空', true); return; }
+        processImportedRows(rows);
+      } catch(err){ showToast('Excel解析失败：'+err.message, true); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  if(existingScript){
+    if(window.XLSX){ doRead(); }
+    else { existingScript.addEventListener('load', doRead); }
+  } else {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
+    script.onload = doRead;
+    script.onerror = function(){ showToast('加载Excel解析库失败，请检查网络', true); };
+    document.head.appendChild(script);
+  }
+}
+
+// ===== CSV 导入 =====
+function importCSVFile(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var text = e.target.result;
+      if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      var rawLines = text.split(/[\r\n]+/);
+      // 过滤空行
+      var nonEmptyLines = rawLines.filter(function(l){ return l.trim().length > 0; });
+      if(nonEmptyLines.length === 0){ showToast('文件为空', true); return; }
+      // 使用 parseCSVLine 正确解析带引号的 CSV
+      var rows = nonEmptyLines.map(function(l){ return parseCSVLine(l); });
+      if(rows.length === 0){ showToast('文件为空', true); return; }
+      processImportedRows(rows);
+    } catch(err){ showToast('CSV解析失败：'+err.message, true); }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// ===== 统一的导入数据处理 =====
+// 接收二维数组 rows[rowIdx][colIdx]
+function processImportedRows(rows){
+  // 过滤空行，同时 trim 每个单元格
+  var lines = [];
+  for(var i = 0; i < rows.length; i++){
+    var row = rows[i];
+    var trimmed = [];
+    var hasContent = false;
+    for(var j = 0; j < row.length; j++){
+      var s = String(row[j] == null ? '' : row[j]).trim();
+      trimmed.push(s);
+      if(s.length > 0) hasContent = true;
+    }
+    if(hasContent) lines.push(trimmed);
+  }
+  if(lines.length === 0){ showToast('文件为空', true); return; }
+
+  // 跳过标题区域
+  var startIdx = 0;
+  for(var si = 0; si < lines.length; si++){
+    var firstCol = lines[si][0].toLowerCase();
+    if(firstCol === '产品id' || firstCol === '产品编号' || firstCol === 'product_id' ||
+       firstCol === 'productid' || firstCol === 'id' ||
+       firstCol.indexOf('产品id') >= 0 ||
+       (firstCol !== '产品明细表' && firstCol !== '等级汇总' && firstCol !== '全局概览' &&
+        firstCol !== '序号' && firstCol !== '产品明细表' && si > 0)){
+      startIdx = si;
+      break;
+    }
+  }
+
+  // 检测是否有表头
+  var firstLine = lines[startIdx];
+  var hasHeader = firstLine.some(function(c){
+    var lc = c.toLowerCase();
+    return lc.indexOf('id')>=0 || lc.indexOf('名称')>=0 || lc.indexOf('name')>=0 ||
+           lc.indexOf('等级')>=0 || lc.indexOf('成本')>=0 || lc.indexOf('价格')>=0 ||
+           lc.indexOf('price')>=0 || lc.indexOf('tier')>=0 || lc.indexOf('level')>=0;
+  });
+
+  var header = hasHeader ? firstLine.map(function(c){ return c.toLowerCase(); }) : [];
+  var dataStart = hasHeader ? startIdx + 1 : startIdx;
+
+  function findCol(names){
+    for(var ni = 0; ni < names.length; ni++){
+      for(var hi = 0; hi < header.length; hi++){
+        if(header[hi].indexOf(names[ni]) >= 0) return hi;
+      }
+    }
+    return -1;
+  }
+
+  var idIdx = findCol(['产品id','产品编号','product_id','productid','id','编号','商品id']);
+  var nameIdx = findCol(['产品名称','名称','产品名','商品名','商品名称','product_name','name','品名','product']);
+  var tierIdx = findCol(['等级','品质','级别','tier','level','稀有度']);
+  var costIdx = findCol(['成本价','成本','cost','成本(¥)','成本价(¥)','进价','成本价格']);
+  var marketPriceIdx = findCol(['原价','市场价','零售价','卖价','售价','参考价','market_price','retail','price','marketPrice','marketprice']);
+
+  // 无表头模式
+  if(!hasHeader){
+    var firstRow = lines[dataStart];
+    var colCount = firstRow.length;
+
+    // 名称列取最长文本
+    if(nameIdx < 0){
+      var bestNameIdx = 0, bestNameLen = 0;
+      for(var ni = 0; ni < colCount; ni++){
+        var v = firstRow[ni];
+        if(v.length > bestNameLen && isNaN(parseFloat(v))){ bestNameLen = v.length; bestNameIdx = ni; }
+      }
+      nameIdx = bestNameLen > 0 ? bestNameIdx : 0;
+    }
+
+    if(idIdx < 0 && colCount >= 2 && nameIdx > 0) idIdx = 0;
+
+    // 成本列取最大数字
+    if(costIdx < 0){
+      var bestCostIdx = -1, bestCostVal = -Infinity;
+      for(var ci = 0; ci < colCount; ci++){
+        if(ci === nameIdx) continue;
+        var val = parseFloat(firstRow[ci]);
+        if(!isNaN(val) && val > bestCostVal){ bestCostVal = val; bestCostIdx = ci; }
+      }
+      costIdx = bestCostIdx >= 0 ? bestCostIdx : (nameIdx === 0 ? 1 : 0);
+    }
+
+    if(tierIdx < 0 && colCount >= 3){
+      for(var ti = 0; ti < colCount; ti++){
+        if(ti !== nameIdx && ti !== costIdx && ti !== idIdx){ tierIdx = ti; break; }
+      }
+    }
+  }
+
+  // 兜底找名称列
+  if(nameIdx < 0 && dataStart < lines.length){
+    var sampleRow = lines[dataStart];
+    var longestCol = -1, longestLen = 0;
+    for(var ci2 = 0; ci2 < sampleRow.length; ci2++){
+      var v = sampleRow[ci2];
+      if(v.length > longestLen && isNaN(parseFloat(v))){ longestLen = v.length; longestCol = ci2; }
+    }
+    if(longestCol >= 0) nameIdx = longestCol;
+  }
+
+  if(nameIdx < 0 || costIdx < 0){
+    showToast('无法识别列结构。请确保包含产品名称和成本价列', true);
+    return;
+  }
+
+  var autoId = (idIdx < 0);
+  var imported = [];
+  var autoIdCounter = 1;
+
+  for(var j = dataStart; j < lines.length; j++){
+    var cols = lines[j];
+    if(cols.length <= Math.max(nameIdx, costIdx)) continue;
+
+    var firstName = cols[0] || '';
+    if(firstName === '' || firstName === '序号') continue;
+    if(firstName.indexOf('等级汇总')>=0 || firstName.indexOf('全局概览')>=0 ||
+       firstName.indexOf('产品明细')>=0) break;
+
+    var name = cols[nameIdx] || '';
+    if(name.length === 0) continue;
+
+    var costStr = String(cols[costIdx] || '0').replace(/[,"]/g,'').trim();
+    var cost = parseFloat(costStr);
+    if(isNaN(cost) || cost <= 0) cost = 0.01;
+
+    var tid = autoId ? ('P' + String(autoIdCounter).padStart(2,'0')) : (cols[idIdx]||'').trim();
+    if(tid.length === 0) tid = 'P' + String(autoIdCounter).padStart(2,'0');
+
+    var tier = '普通';
+    if(tierIdx >= 0 && cols[tierIdx]){
+      var rawTier = cols[tierIdx].trim();
+      if(TIERS.indexOf(rawTier) >= 0) tier = rawTier;
+      else if(rawTier.indexOf('稀有')>=0 || rawTier.toLowerCase().indexOf('rare')>=0 || rawTier.toLowerCase()==='ssr') tier = '稀有';
+      else if(rawTier.indexOf('欧皇')>=0 || rawTier.indexOf('传说')>=0 || rawTier.toLowerCase().indexOf('legend')>=0 || rawTier.toLowerCase()==='sr') tier = '欧皇';
+    }
+
+    var marketPrice = null;
+    if(marketPriceIdx >= 0 && cols[marketPriceIdx]){
+      var mpStr = String(cols[marketPriceIdx]).replace(/[,"]/g,'').trim();
+      var mp = parseFloat(mpStr);
+      if(!isNaN(mp) && mp >= 0) marketPrice = mp;
+    }
+
+    imported.push({ id: tid, name: name, tier: tier, cost: cost, marketPrice: marketPrice });
+    autoIdCounter++;
+  }
+
+  if(imported.length === 0){ showToast('未读取到产品数据，请检查文件内容', true); return; }
+  productPool = imported;
+  saveProductPool();
+  showToast('已导入 ' + imported.length + ' 个产品到产品池');
+}
+
+// ===== 加载示例到产品池 =====
+function loadDemo(){
+  if(state.products.length > 0){
+    if(!confirm('加载示例数据将覆盖现有搭配产品，确定继续？')) return;
+  }
+  state.products = [
+    {_id:nextId++,id:'SSR-01',name:'传说之剑',tier:'稀有',cost:120,marketPrice:599,weight:0},
+    {_id:nextId++,id:'SSR-02',name:'龙鳞铠甲',tier:'稀有',cost:90,marketPrice:499,weight:0},
+    {_id:nextId++,id:'SR-01',name:'魔力戒指',tier:'欧皇',cost:35,marketPrice:199,weight:0},
+    {_id:nextId++,id:'SR-02',name:'精灵之弓',tier:'欧皇',cost:30,marketPrice:169,weight:0},
+    {_id:nextId++,id:'SR-03',name:'暗影斗篷',tier:'欧皇',cost:28,marketPrice:159,weight:0},
+    {_id:nextId++,id:'R-01',name:'治疗药水',tier:'普通',cost:5,marketPrice:29,weight:0},
+    {_id:nextId++,id:'R-02',name:'力量护符',tier:'普通',cost:6,marketPrice:35,weight:0},
+    {_id:nextId++,id:'R-03',name:'金币袋',tier:'普通',cost:4,marketPrice:25,weight:0},
+    {_id:nextId++,id:'R-04',name:'经验之书',tier:'普通',cost:5,marketPrice:29,weight:0},
+    {_id:nextId++,id:'R-05',name:'传送卷轴',tier:'普通',cost:4.5,marketPrice:29,weight:0}
+  ];
+  // 同时填充产品池
+  if(productPool.length === 0){
+    productPool = [
+      {id:'SSR-01',name:'传说之剑',tier:'稀有',cost:120,marketPrice:599},
+      {id:'SSR-02',name:'龙鳞铠甲',tier:'稀有',cost:90,marketPrice:499},
+      {id:'SR-01',name:'魔力戒指',tier:'欧皇',cost:35,marketPrice:199},
+      {id:'SR-02',name:'精灵之弓',tier:'欧皇',cost:30,marketPrice:169},
+      {id:'SR-03',name:'暗影斗篷',tier:'欧皇',cost:28,marketPrice:159},
+      {id:'R-01',name:'治疗药水',tier:'普通',cost:5,marketPrice:29},
+      {id:'R-02',name:'力量护符',tier:'普通',cost:6,marketPrice:35},
+      {id:'R-03',name:'金币袋',tier:'普通',cost:4,marketPrice:25},
+      {id:'R-04',name:'经验之书',tier:'普通',cost:5,marketPrice:29},
+      {id:'R-05',name:'传送卷轴',tier:'普通',cost:4.5,marketPrice:29}
+    ];
+    saveProductPool();
+  }
+  state.totalWeight = 10000;
+  state.tierRatios = {'稀有':1,'欧皇':3,'普通':10};
+  state.targetMargin = 30;
+  state.priceMode = 'auto';
+  state.manualPrice = null;
+  syncConfigToUI();
+  renderAll();
+  showToast('已加载 10 个示例产品');
+}
+
+// ===== 重置 =====
+function resetAll(){
+  if(!confirm('确定要清空全部数据吗？此操作不可恢复。')) return;
+  state.products = [];
+  state.totalWeight = 10000;
+  state.tierRatios = {'稀有':1,'欧皇':3,'普通':10};
+  state.targetMargin = 30;
+  state.priceMode = 'auto';
+  state.manualPrice = null;
+  state.ratioMode = 'manual';
+  nextId = 1;
+  syncConfigToUI();
+  renderAll();
+  showToast('已重置全部数据');
+}
+
+// ===== 事件绑定 =====
+function bindEvents(){
+  var tbody = el('productsTbody');
+  // 使用 input 事件 + 防抖，比 change 更快响应但不会打字卡顿
+  tbody.addEventListener('input', onProductInput);
+  tbody.addEventListener('change', onProductInput);
+  tbody.addEventListener('click', onDeleteClick);
+
+  // 配置输入使用 change 事件（失去焦点时更新），避免输入时卡顿
+  var cfgInputs = ['cfg-totalWeight','cfg-ratioRare','cfg-ratioJackpot','cfg-ratioNormal','cfg-margin','cfg-manualPrice'];
+  cfgInputs.forEach(function(id){
+    el(id).addEventListener('input', function(){
+      // 输入时静默更新 state（不触发渲染），仅失去焦点时渲染
+    });
+    el(id).addEventListener('change', function(){ onConfigChange(); });
+  });
+
+  // 点击弹窗遮罩关闭
+  el('poolOverlay').addEventListener('click', function(e){
+    if(e.target === el('poolOverlay')) closeProductPool();
+  });
+}
+
+// ===== 初始化 =====
+function init(){
+  loadState();
+  loadProductPool();
+  document.documentElement.setAttribute('data-theme', state.theme || 'dark');
+  syncConfigToUI();
+  bindEvents();
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
